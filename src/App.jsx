@@ -95,7 +95,7 @@ function useProgress(courses, requirements) {
       
       const bucket = summary[c.category];
       if (bucket) {
-        if (c.status === 'completed') {
+        if (c.status === 'completed' || c.status === 'binary') {
           bucket.completed += Number(c.credits);
           
           // If this is a specific elective category, also deduct from בחירה כללי
@@ -115,7 +115,8 @@ function useProgress(courses, requirements) {
         bucket.remaining = bucket.required - bucket.completed;
       }
       
-      if (c.grade != null && !isNaN(c.grade)) {
+      // Only count towards GPA if status is not binary
+      if (c.status !== 'binary' && c.grade != null && !isNaN(c.grade)) {
         totalCred += Number(c.credits);
         totalSum += Number(c.credits) * Number(c.grade);
       }
@@ -545,10 +546,15 @@ export default function DegreeProgressApp() {
                             <select value={c.status} onChange={e => updateCourse(c.id, 'status', e.target.value)} className="google-input text-sm py-1">
                               <option value="planned">תוכנן</option>
                               <option value="completed">בוצע</option>
+                              <option value="binary">בינארי</option>
                             </select>
                           ) : (
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${c.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                              {c.status === 'completed' ? 'בוצע' : 'תוכנן'}
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${
+                              c.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              c.status === 'binary' ? 'bg-blue-100 text-blue-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {c.status === 'completed' ? 'בוצע' : c.status === 'binary' ? 'בינארי' : 'תוכנן'}
                             </span>
                           )}
                         </td>
