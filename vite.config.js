@@ -8,4 +8,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
   },
+  css: {
+    postcss: './postcss.config.js', // Explicitly specify the postcss config
+  }
 })
