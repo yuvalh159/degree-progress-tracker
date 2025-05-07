@@ -120,7 +120,7 @@ export default function DegreeProgressApp() {
   const makeCourse = semester => ({
     id: `${Date.now()}-${Math.random()}`,
     name: "",
-    category: "חובה", // Temporarily hardcoded for debugging
+    category: (requirements && Object.keys(requirements).length > 0 ? Object.keys(requirements)[0] : "חובה"),
     credits: 0,
     grade: null,
     status: "planned",
