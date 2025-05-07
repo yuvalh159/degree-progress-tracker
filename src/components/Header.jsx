@@ -1,4 +1,5 @@
 import React from 'react';
+import logoSymbol from '../assets/symbol.png'; // Import the logo
 // DEGREE_PROFILES is no longer used here directly for the dropdown
 
 export default function Header({
@@ -8,12 +9,12 @@ export default function Header({
     setShowReqEditor,
     setShowDegreeManagerModal // New prop to show the degree manager modal
 }) {
-    const logoPath = `${import.meta.env.BASE_URL}symbol.png`;
+    // const logoPath = `${import.meta.env.BASE_URL}symbol.png`; // No longer needed
 
     return (
         <header className="flex items-center justify-between mb-4">
             <div className="flex items-center">
-                <img src={logoPath} alt="Logo" className="w-10 h-10 mr-2" />
+                <img src={logoSymbol} alt="Logo" className="w-10 h-10 mr-2" />
                 <div>
                     <h1 className="text-xl font-medium text-gray-800">מעקב התקדמות</h1>
                     <p className="text-sm text-gray-600">{currentProfile}</p>
