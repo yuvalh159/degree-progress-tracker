@@ -16,6 +16,10 @@ import SemesterCard from "./components/SemesterCard";
 import AddSemesterForm from "./components/AddSemesterForm";
 import Footer from "./components/Footer";
 import DegreeManagerModal from "./components/DegreeManagerModal";
+import Login from "./components/auth/Login";
+import Signup from "./components/auth/Signup";
+import { useAuth } from './context/AuthContext';
+import { auth, db } from "./firebaseConfig";
 
 // Helper function to load JSON objects/arrays from localStorage
 const loadJsonFromLocalStorage = (key, defaultValue) => {
@@ -30,8 +34,7 @@ const loadJsonFromLocalStorage = (key, defaultValue) => {
   }
 };
 
-// ---------- main app component ----------
-export default function DegreeProgressApp() {
+function DegreeProgressAppContent() {
   // State for degree profiles
   const [degreeProfiles, setDegreeProfiles] = useState(() => loadJsonFromLocalStorage("degreeProfiles", INITIAL_DEGREE_PROFILES));
 
@@ -61,6 +64,8 @@ export default function DegreeProgressApp() {
   const [newCategoryValue, setNewCategoryValue] = useState(0);
   const [showDegreeManagerModal, setShowDegreeManagerModal] = useState(false);
 
+  const { currentUser, logout } = useAuth();
+
   // Hoisted function definition for makeCourse
   function makeCourse(semester) {
     return {
@@ -77,30 +82,56 @@ export default function DegreeProgressApp() {
 
   // Effect to save degreeProfiles to localStorage
   useEffect(() => {
-    localStorage.setItem("degreeProfiles", JSON.stringify(degreeProfiles));
-  }, [degreeProfiles]);
+    // Only save to localStorage if NOT logged in (or keep as fallback?)
+    // if (!currentUser) { localStorage.setItem("degreeProfiles", JSON.stringify(degreeProfiles)); }
+    // If logged in, save to Firestore (logic to be added)
+    console.log("TODO: Save degreeProfiles to Firestore for UID:", currentUser?.uid);
+  }, [degreeProfiles, currentUser]);
 
   // Effect to save currentProfile to localStorage
   useEffect(() => {
-    localStorage.setItem("currentProfile", currentProfile);
-    // Update requirements when currentProfile changes
+    // if (!currentUser) { localStorage.setItem("currentProfile", currentProfile); }
     setRequirements(degreeProfiles[currentProfile] || {});
-  }, [currentProfile, degreeProfiles]);
+    console.log("TODO: Save currentProfile to Firestore for UID:", currentUser?.uid);
+  }, [currentProfile, degreeProfiles, currentUser]);
 
   // Effect to save courses to localStorage
   useEffect(() => {
-    localStorage.setItem("courses", JSON.stringify(courses));
-  }, [courses]);
+    // if (!currentUser) { localStorage.setItem("courses", JSON.stringify(courses)); }
+    console.log("TODO: Save courses to Firestore for UID:", currentUser?.uid);
+  }, [courses, currentUser]);
 
   // Effect to save semesters to localStorage
   useEffect(() => {
-    localStorage.setItem("semesters", JSON.stringify(semesters));
-  }, [semesters]);
+    // if (!currentUser) { localStorage.setItem("semesters", JSON.stringify(semesters)); }
+    console.log("TODO: Save semesters to Firestore for UID:", currentUser?.uid);
+  }, [semesters, currentUser]);
 
   // Update categories when requirements change (e.g. profile switch or req edit)
   useEffect(() => {
     setCategories(Object.keys(requirements));
   }, [requirements]);
+
+  // TODO: Add effect to LOAD data from Firestore when currentUser changes/logs in
+  useEffect(() => {
+    if (currentUser) {
+      console.log("TODO: Load data from Firestore for UID:", currentUser.uid);
+      // Placeholder: Reset to defaults when logging in until Firestore loading is implemented
+      // setDegreeProfiles(INITIAL_DEGREE_PROFILES);
+      // setCurrentProfile(DEFAULT_PROFILE);
+      // setCourses([]);
+      // setSemesters([]);
+    } else {
+      console.log("User logged out. Loading from localStorage (or defaults).");
+      // Load from localStorage when logged out
+      setDegreeProfiles(loadJsonFromLocalStorage("degreeProfiles", INITIAL_DEGREE_PROFILES));
+      const savedProfile = localStorage.getItem("currentProfile");
+      setCurrentProfile(savedProfile && degreeProfiles[savedProfile] ? savedProfile : (Object.keys(degreeProfiles)[0] || DEFAULT_PROFILE));
+      setCourses(loadJsonFromLocalStorage("courses", []));
+      setSemesters(loadJsonFromLocalStorage("semesters", []));
+    }
+    // Need to carefully manage dependencies here to avoid loops if state setters trigger this effect
+  }, [currentUser]); // Re-run when user logs in or out
 
   // New function to add a custom category to the CURRENT profile's requirements
   const addCustomCategory = () => {
@@ -264,8 +295,20 @@ export default function DegreeProgressApp() {
     }));
   };
 
+  // --- Logout Handler ---
+  const handleLogout = async () => {
+    try {
+      await logout();
+      console.log("Logout successful");
+      // State will clear via the useEffect watching currentUser
+    } catch (error) {
+      console.error("Failed to log out:", error);
+      // Optionally show an error message to the user
+    }
+  };
+
   return (
-    <div className="google-container">
+    <div className="google-container py-4">
       <SemesterConfirmationModal
         semesterToDelete={semesterToDelete}
         onConfirm={performSemesterDelete}
@@ -298,6 +341,10 @@ export default function DegreeProgressApp() {
         addProfileFn={addDegreeProfile}
         removeProfileFn={removeDegreeProfile}
       />
+
+      <div className="absolute top-2 left-2 z-10">
+        <button onClick={handleLogout} className="google-btn-secondary text-xs py-1 px-2">Logout ({currentUser?.email})</button>
+      </div>
 
       <Header
         currentProfile={currentProfile}
@@ -341,5 +388,20 @@ export default function DegreeProgressApp() {
       <Footer />
     </div>
   );
+}
+
+export default function App() {
+  const { currentUser } = useAuth();
+  const [showSignup, setShowSignup] = useState(false);
+
+  if (currentUser) {
+    return <DegreeProgressAppContent />;
+  } else {
+    if (showSignup) {
+      return <Signup onSwitchToLogin={() => setShowSignup(false)} />;
+    } else {
+      return <Login onSwitchToSignup={() => setShowSignup(true)} />;
+    }
+  }
 }
 
