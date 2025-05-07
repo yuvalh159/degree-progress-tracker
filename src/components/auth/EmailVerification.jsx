@@ -31,15 +31,15 @@ export default function EmailVerification() {
             // Refresh the user state - this will update currentUser.emailVerified
             await refreshUserState();
 
-            // No need to set success message or check emailVerified property
-            // The App.jsx will automatically redirect to main app after refreshUserState
-            // because the currentUser.emailVerified will be true
-
-            // We only reach this code if email is still not verified
-            if (!currentUser.emailVerified) {
-                setMessage('האימייל עדיין לא אומת. אנא אמת את האימייל שלך ונסה שוב.');
+            // Explicitly check if email is now verified
+            if (currentUser && currentUser.emailVerified) {
+                // Force a full page refresh to ensure App.jsx re-evaluates conditions
+                window.location.reload();
+                return; // End function execution here
             }
-            // If verified, App.jsx will re-render with the main app, so we won't see any message
+
+            // Only show this message if email is still not verified
+            setMessage('האימייל עדיין לא אומת. אנא אמת את האימייל שלך ונסה שוב.');
 
         } catch (err) {
             setError(`שגיאה ברענון המצב: ${err.message}`);

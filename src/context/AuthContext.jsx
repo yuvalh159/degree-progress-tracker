@@ -59,9 +59,14 @@ export function AuthProvider({ children }) {
             if (auth.currentUser) {
                 // Reload the user's data from Firebase
                 await reload(auth.currentUser);
-                // Update our state with the refreshed Firebase user object
-                // Don't create a copy, just use the reference directly
-                setCurrentUser(auth.currentUser);
+
+                // Use the updated currentUser directly from auth
+                // This ensures we're using the latest user data
+                setCurrentUser(null); // First set to null to force re-render
+                setTimeout(() => {
+                    // Then set to the current auth user to ensure we get updated data
+                    setCurrentUser(auth.currentUser);
+                }, 100);
             }
         } catch (err) {
             console.error("Error refreshing user state:", err);

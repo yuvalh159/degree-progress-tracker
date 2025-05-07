@@ -453,10 +453,11 @@ export default function App() {
   const handleSwitchToLogin = () => setShowSignup(false);
   const handleSwitchToSignup = () => setShowSignup(true);
 
-  // Logic for rendering content based on authentication and verification status
+  // More explicit check for user state & verification
   const renderContent = () => {
-    // Not logged in - show login or signup
+    // If not logged in, show login or signup
     if (!currentUser) {
+      console.log("App: No user logged in");
       return showSignup ? (
         <Signup onSwitchToLogin={handleSwitchToLogin} />
       ) : (
@@ -464,12 +465,15 @@ export default function App() {
       );
     }
 
-    // Logged in but email not verified
-    if (!currentUser.emailVerified) {
+    // User is logged in
+    console.log("App: User logged in, email verification status:", currentUser.emailVerified);
+
+    // If email not verified, show verification screen
+    if (currentUser.emailVerified !== true) {
       return <EmailVerification />;
     }
 
-    // Logged in and verified - show the main app
+    // User is logged in and verified - show main app
     return <DegreeProgressAppContent />;
   };
 
