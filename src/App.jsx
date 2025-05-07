@@ -117,6 +117,17 @@ export default function DegreeProgressApp() {
     }
   };
 
+  const makeCourse = semester => ({
+    id: `${Date.now()}-${Math.random()}`,
+    name: "",
+    category: "חובה", // Temporarily hardcoded for debugging
+    credits: 0,
+    grade: null,
+    status: "planned",
+    semester,
+    isEditing: true
+  });
+
   const addSemester = () => {
     if (newSem) {
       const formattedSemName = `סמסטר ${newSem}`;
