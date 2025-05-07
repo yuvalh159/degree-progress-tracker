@@ -12,17 +12,17 @@ export default function Header({
     // const logoPath = `${import.meta.env.BASE_URL}symbol.png`; // No longer needed
 
     return (
-        <header className="flex items-center justify-between mb-4">
+        <header className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-3 sm:gap-0">
             <div className="flex items-center">
                 <img src={logoSymbol} alt="Logo" className="w-10 h-10 mr-2" />
                 <div>
                     <h1 className="text-xl font-medium text-gray-800">מעקב התקדמות</h1>
-                    <p className="text-sm text-gray-600">{currentProfile}</p>
+                    <p className="text-sm text-gray-600 truncate max-w-xs sm:max-w-sm md:max-w-md">{currentProfile}</p>
                 </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                 <select
-                    className="google-input text-sm py-1.5 px-3"
+                    className="google-input text-sm py-1.5 px-3 w-full sm:w-auto"
                     value={currentProfile}
                     onChange={(e) => changeProfile(e.target.value)}
                 >
@@ -31,20 +31,24 @@ export default function Header({
                         <option key={profile} value={profile}>{profile}</option>
                     ))}
                 </select>
-                <button onClick={() => setShowReqEditor(true)} className="google-btn-secondary flex items-center text-sm py-1.5 px-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    דרישות
-                </button>
-                {/* New Button to manage degree profiles */}
-                <button
-                    onClick={() => setShowDegreeManagerModal(true)}
-                    className="google-btn-secondary flex items-center text-sm py-1.5 px-3"
-                >
-                    {/* Optional: Add an icon here */}
-                    נהל מסלולים
-                </button>
+                <div className="flex gap-2 w-full sm:w-auto">
+                    <button
+                        onClick={() => setShowReqEditor(true)}
+                        className="google-btn-secondary flex-1 sm:flex-initial flex items-center justify-center text-sm py-1.5 px-3 whitespace-nowrap"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 rtl:ml-1 rtl:mr-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        דרישות
+                    </button>
+                    {/* New Button to manage degree profiles */}
+                    <button
+                        onClick={() => setShowDegreeManagerModal(true)}
+                        className="google-btn-secondary flex-1 sm:flex-initial flex items-center justify-center text-sm py-1.5 px-3 whitespace-nowrap"
+                    >
+                        נהל מסלולים
+                    </button>
+                </div>
             </div>
         </header>
     );
