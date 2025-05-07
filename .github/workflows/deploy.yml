@@ -13,6 +13,9 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,6 +37,14 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # New Step to display Header.jsx content
+      - name: Display Header.jsx content
+        run: |
+          echo "--- Content of src/components/Header.jsx ---"
+          cat src/components/Header.jsx
+          echo "--------------------------------------------"
+        shell: bash
 
       - name: Build project
         # The VITE_BASE_URL environment variable is used by Vite to set the correct base path for assets.
