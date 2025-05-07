@@ -31,7 +31,7 @@ export default function CourseRow({
                         value={course.name}
                         onChange={e => updateCourse(course.id, 'name', e.target.value)}
                         className="google-input text-sm w-full py-1"
-                        autoFocus // Autofocus on the name when editing starts
+                    // autoFocus // Temporarily removed for debugging
                     />
                 ) : (
                     <span className={`${courseColors.text} text-sm`}>{course.name}</span>
