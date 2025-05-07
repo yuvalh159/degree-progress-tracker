@@ -17,13 +17,15 @@ import AddSemesterForm from "./components/AddSemesterForm";
 import Footer from "./components/Footer";
 import DegreeManagerModal from "./components/DegreeManagerModal";
 
-// Helper function to load from localStorage
-const loadFromLocalStorage = (key, defaultValue) => {
+// Helper function to load JSON objects/arrays from localStorage
+const loadJsonFromLocalStorage = (key, defaultValue) => {
   try {
     const storedValue = localStorage.getItem(key);
     return storedValue ? JSON.parse(storedValue) : defaultValue;
   } catch (error) {
-    console.error("Error loading from localStorage:", error);
+    console.error(`Error loading JSON for key '${key}' from localStorage:`, error);
+    // Attempt to clear the corrupted item to prevent repeated errors
+    // localStorage.removeItem(key); // Optional: uncomment to clear corrupted item
     return defaultValue;
   }
 };
@@ -31,20 +33,25 @@ const loadFromLocalStorage = (key, defaultValue) => {
 // ---------- main app component ----------
 export default function DegreeProgressApp() {
   // State for degree profiles
-  const [degreeProfiles, setDegreeProfiles] = useState(() => loadFromLocalStorage("degreeProfiles", INITIAL_DEGREE_PROFILES));
+  const [degreeProfiles, setDegreeProfiles] = useState(() => loadJsonFromLocalStorage("degreeProfiles", INITIAL_DEGREE_PROFILES));
 
   // State for the currently selected profile
   const [currentProfile, setCurrentProfile] = useState(() => {
-    const savedProfile = loadFromLocalStorage("currentProfile", DEFAULT_PROFILE);
-    // Ensure the saved profile is still valid, otherwise default to the first available one
-    return degreeProfiles[savedProfile] ? savedProfile : Object.keys(degreeProfiles)[0] || DEFAULT_PROFILE;
+    // Load currentProfile directly as a string, no JSON.parse needed for simple strings
+    const savedProfile = localStorage.getItem("currentProfile");
+    const initialProfiles = degreeProfiles || INITIAL_DEGREE_PROFILES; // Ensure degreeProfiles is available
+    if (savedProfile && initialProfiles[savedProfile]) {
+      return savedProfile;
+    }
+    // Default to the first available profile or DEFAULT_PROFILE
+    return Object.keys(initialProfiles)[0] || DEFAULT_PROFILE;
   });
 
   // Requirements are derived from the currentProfile and degreeProfiles
   const [requirements, setRequirements] = useState(degreeProfiles[currentProfile] || {});
 
-  const [courses, setCourses] = useState(() => loadFromLocalStorage("courses", []));
-  const [semesters, setSemesters] = useState(() => loadFromLocalStorage("semesters", []));
+  const [courses, setCourses] = useState(() => loadJsonFromLocalStorage("courses", []));
+  const [semesters, setSemesters] = useState(() => loadJsonFromLocalStorage("semesters", []));
 
   const [newSem, setNewSem] = useState("");
   const [showReqEditor, setShowReqEditor] = useState(false);
