@@ -27,13 +27,20 @@ export default function EmailVerification() {
             setLoading(true);
             setMessage('');
             setError('');
+
+            // Refresh the user state - this will update currentUser.emailVerified
             await refreshUserState();
-            // After refreshing, we should check if the email is now verified
-            if (currentUser.emailVerified) {
-                setMessage('האימייל אומת בהצלחה!');
-            } else {
+
+            // No need to set success message or check emailVerified property
+            // The App.jsx will automatically redirect to main app after refreshUserState
+            // because the currentUser.emailVerified will be true
+
+            // We only reach this code if email is still not verified
+            if (!currentUser.emailVerified) {
                 setMessage('האימייל עדיין לא אומת. אנא אמת את האימייל שלך ונסה שוב.');
             }
+            // If verified, App.jsx will re-render with the main app, so we won't see any message
+
         } catch (err) {
             setError(`שגיאה ברענון המצב: ${err.message}`);
             console.error('Error refreshing user state:', err);
@@ -89,7 +96,7 @@ export default function EmailVerification() {
                         disabled={loading}
                         className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                     >
-                        {loading ? 'מרענן...' : 'כבר אימתתי את האימייל שלי'}
+                        {loading ? 'מעביר לחשבון...' : 'כבר אימתתי את האימייל שלי'}
                     </button>
 
                     <button
