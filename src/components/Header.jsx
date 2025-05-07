@@ -1,6 +1,6 @@
 import React from 'react';
 import logoSymbol from '../assets/symbol.png'; // Import the logo
-import { useAuth } from '../../context/AuthContext'; // Import useAuth
+import { useAuth } from '../context/AuthContext';
 // DEGREE_PROFILES is no longer used here directly for the dropdown
 
 export default function Header({
