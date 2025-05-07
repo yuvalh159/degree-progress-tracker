@@ -64,7 +64,7 @@ function DegreeProgressAppContent() {
   const [newCategoryValue, setNewCategoryValue] = useState(0);
   const [showDegreeManagerModal, setShowDegreeManagerModal] = useState(false);
 
-  const { currentUser, logout } = useAuth();
+  const { currentUser } = useAuth();
 
   // Hoisted function definition for makeCourse
   function makeCourse(semester) {
@@ -295,18 +295,6 @@ function DegreeProgressAppContent() {
     }));
   };
 
-  // --- Logout Handler ---
-  const handleLogout = async () => {
-    try {
-      await logout();
-      console.log("Logout successful");
-      // State will clear via the useEffect watching currentUser
-    } catch (error) {
-      console.error("Failed to log out:", error);
-      // Optionally show an error message to the user
-    }
-  };
-
   return (
     <div className="google-container py-4">
       <SemesterConfirmationModal
@@ -341,10 +329,6 @@ function DegreeProgressAppContent() {
         addProfileFn={addDegreeProfile}
         removeProfileFn={removeDegreeProfile}
       />
-
-      <div className="absolute top-2 left-2 z-10">
-        <button onClick={handleLogout} className="google-btn-secondary text-xs py-1 px-2">Logout ({currentUser?.email})</button>
-      </div>
 
       <Header
         currentProfile={currentProfile}

@@ -1,5 +1,6 @@
 import React from 'react';
 import logoSymbol from '../assets/symbol.png'; // Import the logo
+import { useAuth } from '../../context/AuthContext'; // Import useAuth
 // DEGREE_PROFILES is no longer used here directly for the dropdown
 
 export default function Header({
@@ -9,6 +10,18 @@ export default function Header({
     setShowReqEditor,
     setShowDegreeManagerModal // New prop to show the degree manager modal
 }) {
+    const { currentUser, logout } = useAuth(); // Get auth state and logout function
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            console.log("Logout successful from Header");
+        } catch (error) {
+            console.error("Failed to log out from Header:", error);
+            // Maybe show an error to the user
+        }
+    };
+
     // const logoPath = `${import.meta.env.BASE_URL}symbol.png`; // No longer needed
 
     return (
@@ -17,7 +30,9 @@ export default function Header({
                 <img src={logoSymbol} alt="Logo" className="w-10 h-10 mr-2" />
                 <div>
                     <h1 className="text-xl font-medium text-gray-800">מעקב התקדמות</h1>
-                    <p className="text-sm text-gray-600 truncate max-w-xs sm:max-w-sm md:max-w-md">{currentProfile}</p>
+                    <p className="text-sm text-gray-600 truncate max-w-xs sm:max-w-sm md:max-w-md">
+                        {currentUser ? currentUser.email : currentProfile} {/* Show email if logged in, else profile */}
+                    </p>
                 </div>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
@@ -48,6 +63,15 @@ export default function Header({
                     >
                         נהל מסלולים
                     </button>
+                    {/* Logout button - shown only if user is logged in */}
+                    {currentUser && (
+                        <button
+                            onClick={handleLogout}
+                            className="google-btn-secondary flex-1 sm:flex-initial flex items-center justify-center text-sm py-1.5 px-3 whitespace-nowrap bg-red-50 hover:bg-red-100 border-red-300 text-red-700"
+                        >
+                            התנתק (Log Out)
+                        </button>
+                    )}
                 </div>
             </div>
         </header>
