@@ -4,6 +4,11 @@
 
 A web application designed to help students track their academic progress towards their degree. It allows users to manage courses by semester, categorize them, assign credits and grades, and visualize their completed and remaining credits against predefined or custom degree requirements.
 
+## Live Demo
+
+The application is deployed on GitHub Pages and can be accessed here:
+[https://yuvalh159.github.io/degree-progress-tracker/](https://yuvalh159.github.io/degree-progress-tracker/)
+
 ## Features
 
 *   **Course Management:** Add, edit, and remove courses for each semester.
