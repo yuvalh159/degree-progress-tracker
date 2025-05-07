@@ -4,7 +4,9 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signOut,
-    sendPasswordResetEmail
+    sendPasswordResetEmail,
+    sendEmailVerification,
+    reload
 } from 'firebase/auth';
 import { auth } from '../firebaseConfig'; // Import the auth instance
 
@@ -23,9 +25,12 @@ export function AuthProvider({ children }) {
 
     // --- Authentication Functions ---
 
-    function signup(email, password) {
-        // Returns a promise that resolves with userCredential on success
-        return createUserWithEmailAndPassword(auth, email, password);
+    async function signup(email, password) {
+        // Create user account
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // Send verification email
+        await sendEmailVerification(userCredential.user);
+        return userCredential;
     }
 
     function login(email, password) {
@@ -42,13 +47,28 @@ export function AuthProvider({ children }) {
         return sendPasswordResetEmail(auth, email);
     }
 
+    // New function to send verification email
+    function sendVerificationEmail(user = currentUser) {
+        if (!user) throw new Error("No user is logged in");
+        return sendEmailVerification(user);
+    }
+
+    // New function to refresh the user state
+    async function refreshUserState() {
+        if (currentUser) {
+            await reload(currentUser);
+            // Set current user to trigger re-render with new state
+            setCurrentUser({ ...auth.currentUser });
+        }
+    }
+
     // --- Effect for Auth State Listener ---
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setCurrentUser(user);
             setLoading(false);
-            console.log("Auth State Changed: ", user ? `User UID: ${user.uid}` : "No User");
+            console.log("Auth State Changed: ", user ? `User UID: ${user.uid}, Email Verified: ${user.emailVerified}` : "No User");
         });
         return unsubscribe; // Cleanup on unmount
     }, []);
@@ -59,11 +79,13 @@ export function AuthProvider({ children }) {
     const value = useMemo(() => ({
         currentUser,
         loading,
-        signup, // Provide signup function
-        login,  // Provide login function
-        logout, // Provide logout function
-        resetPassword // Provide resetPassword function
-    }), [currentUser, loading]); // Dependencies: currentUser, loading (functions don't need to be deps as they derive from auth instance which is stable)
+        signup,
+        login,
+        logout,
+        resetPassword,
+        sendVerificationEmail,
+        refreshUserState
+    }), [currentUser, loading]);
 
     // --- Render Provider ---
 
