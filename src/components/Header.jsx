@@ -8,10 +8,12 @@ export default function Header({
     setShowReqEditor,
     setShowDegreeManagerModal // New prop to show the degree manager modal
 }) {
+    const logoPath = `${import.meta.env.BASE_URL}symbol.png`;
+
     return (
         <header className="flex items-center justify-between mb-4">
             <div className="flex items-center">
-                <img src="/symbol.png" alt="Logo" className="w-10 h-10 mr-2" />
+                <img src={logoPath} alt="Logo" className="w-10 h-10 mr-2" />
                 <div>
                     <h1 className="text-xl font-medium text-gray-800">מעקב התקדמות</h1>
                     <p className="text-sm text-gray-600">{currentProfile}</p>
