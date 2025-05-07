@@ -54,6 +54,20 @@ export default function DegreeProgressApp() {
   const [newCategoryValue, setNewCategoryValue] = useState(0);
   const [showDegreeManagerModal, setShowDegreeManagerModal] = useState(false);
 
+  // Hoisted function definition for makeCourse
+  function makeCourse(semester) {
+    return {
+      id: `${Date.now()}-${Math.random()}`,
+      name: "",
+      category: (requirements && Object.keys(requirements).length > 0 ? Object.keys(requirements)[0] : "חובה"),
+      credits: 0,
+      grade: null,
+      status: "planned",
+      semester,
+      isEditing: true
+    };
+  }
+
   // Effect to save degreeProfiles to localStorage
   useEffect(() => {
     localStorage.setItem("degreeProfiles", JSON.stringify(degreeProfiles));
@@ -116,17 +130,6 @@ export default function DegreeProgressApp() {
       // Requirements will be updated by the useEffect that listens to currentProfile changes
     }
   };
-
-  const makeCourse = semester => ({
-    id: `${Date.now()}-${Math.random()}`,
-    name: "",
-    category: (requirements && Object.keys(requirements).length > 0 ? Object.keys(requirements)[0] : "חובה"),
-    credits: 0,
-    grade: null,
-    status: "planned",
-    semester,
-    isEditing: true
-  });
 
   const addSemester = () => {
     if (newSem) {
