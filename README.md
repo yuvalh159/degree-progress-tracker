@@ -1,70 +1,83 @@
-# GitHub Codespaces ♥️ React
+# Degree Progress Tracker
 
-Welcome to your shiny new Codespace running React! We've got everything fired up and running for you to explore React.
+## Description
 
-You've got a blank canvas to work on from a git perspective as well. There's a single initial commit with the what you're seeing right now - where you go from here is up to you!
+A web application designed to help students track their academic progress towards their degree. It allows users to manage courses by semester, categorize them, assign credits and grades, and visualize their completed and remaining credits against predefined or custom degree requirements.
 
-Everything you do here is contained within this one codespace. There is no repository on GitHub yet. If and when you’re ready you can click "Publish Branch" and we’ll create your repository and push up your project. If you were just exploring then and have no further need for this code then you can simply delete your codespace and it's gone forever.
+## Features
 
-This project was bootstrapped for you with [Vite](https://vitejs.dev/).
+*   **Course Management:** Add, edit, and remove courses for each semester.
+*   **Semester Management:** Add and remove semesters as needed.
+*   **Categorization:** Assign courses to categories (e.g., Compulsory, General Elective, Specific Electives, etc.).
+*   **Credit & Grade Tracking:** Input credits and grades for each course to monitor academic standing.
+*   **GPA Calculation:** Automatically calculates Grade Point Average based on completed courses.
+*   **Degree Profiles:** Predefined degree requirements for various engineering disciplines (Mechanical, Electrical, Software) with the ability to switch between them.
+*   **Customizable Requirements:** Edit credit point requirements for each category.
+*   **Custom Categories:** Add new custom course categories to tailor to specific degree needs.
+*   **Progress Visualization:** Clear visual indicators (progress bars) for each category showing completed vs. required credits.
+*   **Drag & Drop:** Easily move courses between semesters using drag and drop.
+*   **Responsive Design:** User interface designed to work across different screen sizes.
+
+## Tech Stack
+
+*   **Frontend:** React
+*   **Build Tool:** Vite
+*   **Styling:** Tailwind CSS
+*   **Language:** JavaScript
+
+## Getting Started
+
+Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+
+### Prerequisites
+
+Make sure you have Node.js and npm (Node Package Manager) installed on your system.
+*   [Node.js (which includes npm)](https://nodejs.org/)
+
+### Installation
+
+1.  Clone the repository:
+    ```sh
+    git clone https://github.com/yuvalh159/degree-progress-tracker.git
+    ```
+2.  Navigate to the project directory:
+    ```sh
+    cd degree-progress-tracker
+    ```
+3.  Install the dependencies:
+    ```sh
+    npm install
+    ```
+
+### Running for Development
+
+To start the development server and view the application in your browser:
+
+```sh
+npm run start
+```
+
+This will typically open the application at `http://localhost:3000` (or `http://localhost:3000/degree-progress-tracker/` as configured in `vite.config.js` for GitHub Pages deployment).
 
 ## Available Scripts
 
 In the project directory, you can run:
 
-### `npm start`
+*   `npm run start`
+    *   Runs the app in development mode with hot reloading.
 
-We've already run this for you in the `Codespaces: server` terminal window below. If you need to stop the server for any reason you can just run `npm start` again to bring it back online.
+*   `npm run build`
+    *   Builds the app for production to the `dist` folder.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000/](http://localhost:3000/) in the built-in Simple Browser (`Cmd/Ctrl + Shift + P > Simple Browser: Show`) to view your running application.
+*   `npm run preview`
+    *   Serves the production build from the `dist` folder locally to preview it.
 
-The page will reload automatically when you make changes.\
-You may also see any lint errors in the console.
+*   `npm run test`
+    *   Runs tests using Vitest (if tests are configured).
 
-### `npm test`
+*   `npm run predeploy` & `npm run deploy`
+    *   These scripts are used together to build the application and deploy it to GitHub Pages. The `deploy` script uses `gh-pages` to push the contents of the `dist` folder to the `gh-pages` branch.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## License
 
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-## Learn More
-
-You can learn more in the [Vite documentation](https://vitejs.dev/guide/).
-
-To learn Vitest, a Vite-native testing framework, go to [Vitest documentation](https://vitest.dev/guide/)
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://sambitsahoo.com/blog/vite-code-splitting-that-works.html](https://sambitsahoo.com/blog/vite-code-splitting-that-works.html)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://github.com/btd/rollup-plugin-visualizer#rollup-plugin-visualizer](https://github.com/btd/rollup-plugin-visualizer#rollup-plugin-visualizer)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://dev.to/hamdankhan364/simplifying-progressive-web-app-pwa-development-with-vite-a-beginners-guide-38cf](https://dev.to/hamdankhan364/simplifying-progressive-web-app-pwa-development-with-vite-a-beginners-guide-38cf)
-
-### Advanced Configuration
-
-This section has moved here: [https://vitejs.dev/guide/build.html#advanced-base-options](https://vitejs.dev/guide/build.html#advanced-base-options)
-
-### Deployment
-
-This section has moved here: [https://vitejs.dev/guide/build.html](https://vitejs.dev/guide/build.html)
-
-### Troubleshooting
-
-This section has moved here: [https://vitejs.dev/guide/troubleshooting.html](https://vitejs.dev/guide/troubleshooting.html)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
