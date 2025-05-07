@@ -2,13 +2,17 @@ import { useMemo } from "react";
 
 // ---------- hook to compute summary and GPA ----------
 export default function useProgress(courses, requirements) {
+    // Ensure requirements is an object, default to empty object if not
+    const validRequirements = (typeof requirements === 'object' && requirements !== null) ? requirements : {};
+
     return useMemo(() => {
         const summary = {};
-        Object.keys(requirements).forEach(cat => (summary[cat] = {
-            required: requirements[cat],
+        // Use validRequirements here
+        Object.keys(validRequirements).forEach(cat => (summary[cat] = {
+            required: validRequirements[cat],
             completed: 0,
             planned: 0,
-            remaining: requirements[cat]
+            remaining: validRequirements[cat]
         }));
 
         let totalCred = 0, totalSum = 0;
@@ -54,5 +58,5 @@ export default function useProgress(courses, requirements) {
         }
 
         return { summary, gpa: totalCred ? totalSum / totalCred : 0 };
-    }, [courses, requirements]);
+    }, [courses, validRequirements]); // Depend on validRequirements
 } 
