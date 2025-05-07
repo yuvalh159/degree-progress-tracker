@@ -3,7 +3,8 @@ import {
     onAuthStateChanged,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    signOut
+    signOut,
+    sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth } from '../firebaseConfig'; // Import the auth instance
 
@@ -37,6 +38,10 @@ export function AuthProvider({ children }) {
         return signOut(auth);
     }
 
+    function resetPassword(email) {
+        return sendPasswordResetEmail(auth, email);
+    }
+
     // --- Effect for Auth State Listener ---
 
     useEffect(() => {
@@ -56,7 +61,8 @@ export function AuthProvider({ children }) {
         loading,
         signup, // Provide signup function
         login,  // Provide login function
-        logout // Provide logout function
+        logout, // Provide logout function
+        resetPassword // Provide resetPassword function
     }), [currentUser, loading]); // Dependencies: currentUser, loading (functions don't need to be deps as they derive from auth instance which is stable)
 
     // --- Render Provider ---

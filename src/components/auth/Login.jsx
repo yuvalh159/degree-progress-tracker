@@ -6,28 +6,46 @@ export default function Login({ onSwitchToSignup }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [message, setMessage] = useState(''); // For success/info messages
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth(); // Get login function from context
+    const { login, resetPassword } = useAuth(); // Get login and resetPassword function from context
     // const navigate = useNavigate(); // If using react-router-dom
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setMessage(''); // Clear previous messages
+        setError('');
 
         try {
-            setError('');
             setLoading(true);
             console.log("Attempting login with:", email);
             await login(email, password);
             console.log("Login successful!");
             // AuthProvider will update currentUser
-            // Redirect to the main app page after successful login
-            // navigate('/'); // Example redirect using react-router-dom
-            alert("Login successful!"); // Placeholder
+            // No need for alert here, App.jsx will re-render
         } catch (err) {
             console.error("Login failed:", err);
-            setError(`Failed to log in: ${err.message}`);
+            setError(`ההתחברות נכשלה: ${err.message}`);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePasswordReset = async () => {
+        setError(''); // Clear previous errors
+        setMessage('');
+        const resetEmail = window.prompt("אנא הזן את כתובת האימייל שלך לאיפוס סיסמה:");
+        if (resetEmail) {
+            try {
+                setLoading(true);
+                await resetPassword(resetEmail);
+                setMessage("נשלח מייל לאיפוס סיסמה. בדוק את תיבת הדואר הנכנס שלך (כולל תיקיית ספאם).");
+            } catch (err) {
+                console.error("Password reset failed:", err);
+                setError(`שליחת מייל לאיפוס סיסמה נכשלה: ${err.message}`);
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -41,8 +59,13 @@ export default function Login({ onSwitchToSignup }) {
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     {error && (
-                        <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                        <div className="p-3 mb-4 bg-red-100 border border-red-400 text-red-700 rounded">
                             <p className="text-center text-sm">{error}</p>
+                        </div>
+                    )}
+                    {message && (
+                        <div className="p-3 mb-4 bg-green-100 border border-green-400 text-green-700 rounded">
+                            <p className="text-center text-sm">{message}</p>
                         </div>
                     )}
                     <input type="hidden" name="remember" defaultValue="true" />
@@ -77,7 +100,18 @@ export default function Login({ onSwitchToSignup }) {
                         </div>
                     </div>
 
-                    {/* Optional: Add "Forgot password?" link here */}
+                    <div className="flex items-center justify-end">
+                        <div className="text-sm">
+                            <button
+                                type="button" // Important: type='button' to not submit the form
+                                onClick={handlePasswordReset}
+                                className="font-medium text-orange-600 hover:text-orange-500 focus:outline-none"
+                                disabled={loading}
+                            >
+                                שכחתי סיסמה?
+                            </button>
+                        </div>
+                    </div>
 
                     <div>
                         <button
