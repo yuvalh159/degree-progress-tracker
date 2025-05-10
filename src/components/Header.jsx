@@ -8,48 +8,72 @@ export default function Header({
     availableProfiles, // New prop for dynamic profiles
     changeProfile,
     setShowReqEditor,
-    setShowDegreeManagerModal // New prop to show the degree manager modal
+    setShowDegreeManagerModal,
+    onStartTourRequest,
+    isGuest, // New prop: boolean indicating if the user is a guest
+    onLogout // New prop: function to handle logout or exiting guest mode (passed from App.jsx)
 }) {
-    const { currentUser, logout } = useAuth(); // Get auth state and logout function
+    const { currentUser, logout: contextLogout } = useAuth(); // Get auth state and actual logout function from context
 
-    const handleLogout = async () => {
-        try {
-            await logout();
-            console.log("Logout successful from Header");
-        } catch (error) {
-            console.error("Failed to log out from Header:", error);
-            // Maybe show an error to the user
+    const handlePrimaryAction = async () => {
+        if (isGuest) {
+            if (typeof onLogout === 'function') {
+                onLogout(); // This will call exitGuestMode() via App.jsx
+            }
+        } else if (currentUser) {
+            try {
+                await contextLogout(); // Call the actual logout from AuthContext
+                console.log("Logout successful from Header");
+            } catch (error) {
+                console.error("Failed to log out from Header:", error);
+            }
         }
     };
 
     // const logoPath = `${import.meta.env.BASE_URL}symbol.png`; // No longer needed
 
     return (
-        <header className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-3 sm:gap-0">
+        <header className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-3 sm:gap-0 w-full">
             <div className="flex items-center">
-                <img src={logoSymbol} alt="Logo" className="w-10 h-10 mr-2" />
+                <img src={logoSymbol} alt="Site Logo" className="w-16 h-16 mr-4" />
                 <div>
-                    <h1 className="text-xl font-medium text-gray-800">מעקב התקדמות</h1>
-                    <p className="text-sm text-gray-600 truncate max-w-xs sm:max-w-sm md:max-w-md">
-                        {currentUser ? currentUser.email : currentProfile} {/* Show email if logged in, else profile */}
+                    <h1 className="text-xl font-medium text-gray-800">נקודות אור - מעקב התקדמות אקדמית</h1>
+                    <p className="text-sm text-gray-600 truncate max-w-xs sm:max-w-sm md:max-w-md mt-0.5">
+                        {isGuest ? "מצב אורח" : (currentUser ? currentUser.email : currentProfile)}
                     </p>
                 </div>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-                <select
-                    className="google-input text-sm py-1.5 px-3 w-full sm:w-auto"
-                    value={currentProfile}
-                    onChange={(e) => changeProfile(e.target.value)}
-                >
-                    {/* Populate from availableProfiles prop */}
-                    {availableProfiles.map(profile => (
-                        <option key={profile} value={profile}>{profile}</option>
-                    ))}
-                </select>
+                {/* Profile selector - might want to disable or hide for guests if profiles are not relevant */}
+                {!isGuest && (
+                    <select
+                        className="google-input text-sm py-1.5 px-3 w-full sm:w-auto header-profile-selector"
+                        value={currentProfile}
+                        onChange={(e) => changeProfile(e.target.value)}
+                        disabled={isGuest} // Disable if guest mode is active
+                    >
+                        {/* Populate from availableProfiles prop */}
+                        {availableProfiles.map(profile => (
+                            <option key={profile} value={profile}>{profile}</option>
+                        ))}
+                    </select>
+                )}
                 <div className="flex gap-2 w-full sm:w-auto">
+                    {/* Button to start the tour */}
+                    <button
+                        onClick={onStartTourRequest}
+                        className="google-btn-secondary flex-1 sm:flex-initial flex items-center justify-center text-sm py-1.5 px-3 whitespace-nowrap"
+                        title="הפעל סיור הדרכה"
+                    >
+                        {/* Optional: Icon instead of text */}
+                        {/* <svg xmlns=... question mark icon ... /> */}
+                        סיור הדרכה
+                    </button>
+                    {/* Requirements and Manage Profiles buttons might also be considered for guest mode (e.g., read-only or fully functional with localStorage) */}
                     <button
                         onClick={() => setShowReqEditor(true)}
-                        className="google-btn-secondary flex-1 sm:flex-initial flex items-center justify-center text-sm py-1.5 px-3 whitespace-nowrap"
+                        className="google-btn-secondary flex-1 sm:flex-initial flex items-center justify-center text-sm py-1.5 px-3 whitespace-nowrap requirements-button"
+                        disabled={isGuest} // Example: disable for guests if requirements are tied to logged-in state
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 rtl:ml-1 rtl:mr-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -60,16 +84,17 @@ export default function Header({
                     <button
                         onClick={() => setShowDegreeManagerModal(true)}
                         className="google-btn-secondary flex-1 sm:flex-initial flex items-center justify-center text-sm py-1.5 px-3 whitespace-nowrap"
+                        disabled={isGuest} // Example: disable for guests 
                     >
                         נהל מסלולים
                     </button>
-                    {/* Logout button - shown only if user is logged in */}
-                    {currentUser && (
+                    {/* Login/Signup or Logout Button */}
+                    {(currentUser || isGuest) && (
                         <button
-                            onClick={handleLogout}
-                            className="google-btn-secondary flex-1 sm:flex-initial flex items-center justify-center text-sm py-1.5 px-3 whitespace-nowrap bg-red-50 hover:bg-red-100 border-red-300 text-red-700"
+                            onClick={handlePrimaryAction}
+                            className={`google-btn-secondary flex-1 sm:flex-initial flex items-center justify-center text-sm py-1.5 px-3 whitespace-nowrap ${isGuest ? 'bg-green-50 hover:bg-green-100 border-green-300 text-green-700' : 'bg-red-50 hover:bg-red-100 border-red-300 text-red-700'}`}
                         >
-                            התנתק (Log Out)
+                            {isGuest ? "התחבר / הרשם" : "התנתק"}
                         </button>
                     )}
                 </div>

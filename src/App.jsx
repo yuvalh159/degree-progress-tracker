@@ -23,6 +23,7 @@ import { useAuth } from './context/AuthContext';
 import { auth, db } from "./firebaseConfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import PdfUpload from "./components/PdfProcessor/PdfUpload";
+import TourGuide from "./components/TourGuide";
 
 // Helper function to load JSON objects/arrays from localStorage
 const loadJsonFromLocalStorage = (key, defaultValue) => {
@@ -68,7 +69,7 @@ const loadUserAppState = async (userId) => {
   }
 };
 
-function DegreeProgressAppContent() {
+function DegreeProgressAppContent({ isGuest, exitGuestMode }) {
   const { currentUser } = useAuth();
 
   // State for degree profiles
@@ -95,6 +96,43 @@ function DegreeProgressAppContent() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryValue, setNewCategoryValue] = useState(0);
   const [showDegreeManagerModal, setShowDegreeManagerModal] = useState(false);
+  const [shouldRunTour, setShouldRunTour] = useState(false); // New state for tour control
+
+  const HEBREW_SEMESTER_ALPHABET = [
+    "א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט", "י",
+    "יא", "יב", "יג", "יד", "טו", "טז", "יז", "יח", "יט", "כ",
+    "כא", "כב", "כג", "כד", "כה", "כו", "כז", "כח", "כט", "ל"
+  ];
+
+  function getChronologicalSortKey(pdfSemesterName) {
+    // console.log(`[SortKey] Input: "${pdfSemesterName}"`); // Log input
+    if (typeof pdfSemesterName !== 'string') {
+      // console.log("[SortKey] Not a string, returning default.");
+      return '9999-9';
+    }
+
+    const yearMatch = pdfSemesterName.match(/^(\d{4})-\d{4}/);
+    const year = yearMatch ? parseInt(yearMatch[1], 10) : 9999;
+    // console.log(`[SortKey] Extracted year: ${year}`);
+
+    let seasonOrder = 9; // Default for unknown seasons
+    if (pdfSemesterName.includes("חורף")) {
+      seasonOrder = 1;       // Winter
+      // console.log("[SortKey] Season: חורף (1)");
+    } else if (pdfSemesterName.includes("אביב")) {
+      seasonOrder = 2;  // Spring
+      // console.log("[SortKey] Season: אביב (2)");
+    } else if (pdfSemesterName.includes("קיץ")) {
+      seasonOrder = 3;   // Summer
+      // console.log("[SortKey] Season: קיץ (3)");
+    } else {
+      // console.log("[SortKey] Season: Unknown (9)");
+    }
+
+    const key = `${year}-${seasonOrder}`;
+    // console.log(`[SortKey] Generated key: "${key}" for input "${pdfSemesterName}"`);
+    return key;
+  }
 
   // Hoisted function definition for makeCourse
   function makeCourse(semester) {
@@ -109,6 +147,142 @@ function DegreeProgressAppContent() {
       isEditing: true
     };
   }
+
+  // Function to handle data parsed from PDF
+  const handlePdfDataParsed = (parsedData) => {
+    if (!parsedData || !parsedData.courses) {
+      console.error("No parsed data or courses received from PDF.");
+      return;
+    }
+
+    console.log("App.jsx: Received parsed data from PDF:", parsedData);
+    const { degreeName: parsedDegreeName, courses: parsedCourses } = parsedData;
+
+    // 1. Determine Semester Mapping
+    const uniqueRawSemesters = [...new Set(parsedCourses.map(pc => pc.semester).filter(s => s && s !== "N/A"))];
+    // console.log("[PDF Import] Raw unique semesters from PDF:", uniqueRawSemesters);
+    // Forcing individual logging if the above is not fully expanded in console:
+    // uniqueRawSemesters.forEach((item, index) => console.log(`[PDF Import] Raw unique item ${index}: ${item}`));
+
+    uniqueRawSemesters.sort((a, b) => {
+      const keyA = getChronologicalSortKey(a);
+      const keyB = getChronologicalSortKey(b);
+      return keyA.localeCompare(keyB);
+    });
+    // console.log("[PDF Import] Sorted raw unique semesters:", uniqueRawSemesters);
+    // Forcing individual logging:
+    // uniqueRawSemesters.forEach((item, index) => console.log(`[PDF Import] Sorted raw item ${index}: ${item}`));
+
+    const semesterNameMap = {};
+    uniqueRawSemesters.forEach((rawName, index) => {
+      if (index < HEBREW_SEMESTER_ALPHABET.length) {
+        semesterNameMap[rawName] = `סמסטר ${HEBREW_SEMESTER_ALPHABET[index]}`;
+      } else {
+        semesterNameMap[rawName] = `סמסטר ${index + 1}`; // Fallback for more than 30 semesters
+      }
+    });
+    // console.log("[PDF Import] Semester name map:", semesterNameMap);
+
+    // 2. Transform parsed courses
+    const newCourses = parsedCourses.map(pc => {
+      let status = "planned";
+      let numericGrade = null; // Temp variable to hold parsed numeric grade
+      const credits = parseFloat(pc.points) || 0;
+      let finalGradeRepresentation = pc.grade; // What we'll store in the course object
+
+      if (pc.grade) {
+        const parsedNumGradeAttempt = parseFloat(pc.grade);
+        if (!isNaN(parsedNumGradeAttempt)) { // It's a number
+          numericGrade = parsedNumGradeAttempt;
+          finalGradeRepresentation = numericGrade; // Store the number
+          if (numericGrade >= 55) { // Assuming 55 is passing
+            status = "completed";
+          } else {
+            status = "planned"; // Failing numeric grades are kept as planned for now
+          }
+        } else { // It's text
+          const trimmedGradeText = pc.grade.trim();
+          // List of textual grades that signify completion but don't go into GPA
+          const binaryStatusGrades = ["עובר", "פטור", "פטור ללא ניקוד", "פטור עם ניקוד"];
+          if (binaryStatusGrades.includes(trimmedGradeText)) {
+            status = "binary";
+            // finalGradeRepresentation remains the original text (pc.grade)
+          }
+          // Any other unrecognised text grade will keep status as "planned"
+          // and finalGradeRepresentation as the original text.
+        }
+      }
+
+      // If status is completed, ensure grade is set appropriately for GPA calculation later if needed
+      // For text grades that mean completion but have no numeric value for GPA, grade remains as text or null.
+      // The useProgress hook handles numeric and non-numeric grades differently.
+
+      return {
+        id: `${Date.now()}-${Math.random()}-${pc.code}`, // More unique ID
+        name: pc.name,
+        category: "לא מסווג", // Changed category
+        credits: credits,
+        grade: finalGradeRepresentation, // Store numeric if available, else text
+        status: status,
+        semester: semesterNameMap[pc.semester] || pc.semester, // Use mapped name, fallback to original if somehow not in map
+        isEditing: false, // Imported courses are not in editing mode
+      };
+    });
+
+    // 3. Extract and update semesters state with new sequential names
+    const finalSemesterNames = uniqueRawSemesters.map(rawName => semesterNameMap[rawName]);
+    // console.log("[PDF Import] Final sequential semester names to be set:", finalSemesterNames);
+    // Forcing individual logging:
+    // finalSemesterNames.forEach((item, index) => console.log(`[PDF Import] Final sequential item ${index}: ${item}`));
+
+    setSemesters(prevSemesters => {
+      // We replace semesters based on the PDF, but could merge if needed
+      // For now, let's ensure order from PDF is preserved if merging.
+      // Simplest: just use the new sorted list from the PDF.
+      // If prevSemesters had manually added ones, this will overwrite.
+      // Consider a more sophisticated merge if manual semesters should be kept.
+      return finalSemesterNames;
+    });
+
+    // 4. Replace existing courses with the new, transformed courses
+    // Consider adding a confirmation step here in a real app
+    setCourses(newCourses);
+    console.log("App.jsx: Updated courses and semesters based on PDF data.", newCourses, finalSemesterNames);
+
+    // Optional: Handle degreeName - e.g., suggest creating/switching profile
+    // For now, we just log it. User might need to manually ensure they are on the correct profile.
+    if (parsedDegreeName && parsedDegreeName !== "Not Found") {
+      // Check if the currentProfile's name is different or if a profile with parsedDegreeName exists
+      const currentProfileDisplayName = Object.keys(degreeProfiles).find(key => key === currentProfile) || currentProfile;
+
+      if (currentProfileDisplayName !== parsedDegreeName) {
+        // Check if a profile with parsedDegreeName exists
+        if (degreeProfiles[parsedDegreeName]) {
+          // A profile with the parsed name already exists.
+          // Potentially ask user if they want to switch to it.
+          // For now, just log.
+          console.log(`Parsed degree name "${parsedDegreeName}" matches an existing profile. Consider switching if not already on it.`);
+        } else {
+          // No profile with the parsed name exists.
+          // Potentially ask user if they want to create it or if they want to rename current.
+          // For now, just log.
+          alert(`המסלול שזוהה בקובץ הוא "${parsedDegreeName}".\\nהמסלול הנוכחי הוא "${currentProfileDisplayName}".\\nהקורסים יובאו למסלול הנוכחי.\\nניתן ליצור מסלול חדש בשם "${parsedDegreeName}" דרך "נהל מסלולים" ולהריץ את הייבוא שוב אם רוצים להפריד.`);
+        }
+      }
+    }
+    // Add "מיובא מהקובץ" to categories if it doesn't exist for the current profile
+    // This ensures the category is available in dropdowns etc.
+    if (currentProfile && requirements && !requirements["לא מסווג"]) {
+      const updatedRequirements = {
+        ...requirements,
+        ["לא מסווג"]: 0 // Default to 0 required, it's just a label
+      };
+      setDegreeProfiles(prevProfiles => ({
+        ...prevProfiles,
+        [currentProfile]: updatedRequirements
+      }));
+    }
+  };
 
   // Combined effect to save state to Firestore or localStorage
   useEffect(() => {
@@ -372,8 +546,44 @@ function DegreeProgressAppContent() {
     }));
   };
 
+  // Effect to run the tour once for new users
+  useEffect(() => {
+    const tourHasBeenSeen = localStorage.getItem('degreeProgressTourSeen');
+    if (!tourHasBeenSeen) {
+      setShouldRunTour(true);
+    }
+  }, []);
+
+  const handleStartTourRequest = () => {
+    localStorage.removeItem('degreeProgressTourSeen'); // Clear so it feels like a fresh start
+    setShouldRunTour(true);
+  };
+
+  const handleTourCompletion = () => {
+    setShouldRunTour(false);
+    // TourGuide component will set 'degreeProgressTourSeen' in localStorage internally upon finish/skip
+  };
+
+  const handleHeaderLogout = async () => {
+    if (isGuest) {
+      // If it's a guest, exiting guest mode effectively takes them to auth screen
+      exitGuestMode();
+    } else if (currentUser) {
+      // Regular logout for registered user (this will be called from Header's own logout)
+      // This function in App is more for abstracting what happens on "logout" action from header
+      // Actual firebase logout is in AuthContext and called by Header
+      // Here, we just ensure guest state is cleared if somehow it was set.
+      if (typeof exitGuestMode === 'function') exitGuestMode(); // Clear guest just in case
+    }
+    // Navigation to auth screen will be handled by App component based on currentUser/isGuest state
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4 font-sans relative">
+    <div className="min-h-screen bg-stone-50 flex flex-col p-4 font-sans relative">
+      <TourGuide
+        run={shouldRunTour}
+        onComplete={handleTourCompletion}
+      />
       <SemesterConfirmationModal
         semesterToDelete={semesterToDelete}
         onConfirm={performSemesterDelete}
@@ -413,10 +623,13 @@ function DegreeProgressAppContent() {
         changeProfile={changeProfile}
         setShowReqEditor={() => setShowReqEditor(true)}
         setShowDegreeManagerModal={() => setShowDegreeManagerModal(true)}
+        onStartTourRequest={handleStartTourRequest}
+        isGuest={isGuest}
+        onLogout={handleHeaderLogout}
       />
 
-      <div className="w-full max-w-4xl my-4 p-4 bg-white shadow-md rounded-lg">
-        <PdfUpload />
+      <div className="flex justify-center my-6 pdf-upload-section">
+        <PdfUpload onPdfDataParsed={handlePdfDataParsed} />
       </div>
 
       <SummaryStats
@@ -425,7 +638,7 @@ function DegreeProgressAppContent() {
         categories={categories}
       />
 
-      <div className="space-y-3">
+      <div className="space-y-3 w-full semester-cards-container">
         {semesters.map((sem) => (
           <SemesterCard
             key={sem}
@@ -456,40 +669,38 @@ function DegreeProgressAppContent() {
 }
 
 export default function App() {
-  const [showSignup, setShowSignup] = useState(false);
-  const { currentUser } = useAuth(); // Get the currently logged-in user
+  const { currentUser, loading, isGuest, exitGuestMode } = useAuth(); // Get isGuest and exitGuestMode
+  const [showSignup, setShowSignup] = useState(false); // Manages Login vs Signup view
 
   const handleSwitchToLogin = () => setShowSignup(false);
   const handleSwitchToSignup = () => setShowSignup(true);
 
-  // More explicit check for user state & verification
+  // Main content rendering logic
   const renderContent = () => {
-    // If not logged in, show login or signup
-    if (!currentUser) {
-      console.log("App: No user logged in");
-      return showSignup ? (
-        <Signup onSwitchToLogin={handleSwitchToLogin} />
-      ) : (
-        <Login onSwitchToSignup={handleSwitchToSignup} />
-      );
+    if (loading) {
+      return <div className="flex justify-center items-center min-h-screen">טוען...</div>;
     }
 
-    // User is logged in
-    console.log("App: User logged in, email verification status:", currentUser.emailVerified);
+    if (isGuest || (currentUser && currentUser.emailVerified)) {
+      return <DegreeProgressAppContent isGuest={isGuest} exitGuestMode={exitGuestMode} />;
+    }
 
-    // If email not verified, show verification screen
-    if (currentUser.emailVerified !== true) {
+    if (currentUser && !currentUser.emailVerified) {
       return <EmailVerification />;
     }
 
-    // User is logged in and verified - show main app
-    return <DegreeProgressAppContent />;
+    // Not loading, not guest, no verified user: Show AuthComponent
+    return (
+      showSignup ?
+        <Signup onSwitchToLogin={handleSwitchToLogin} /> :
+        <Login onSwitchToSignup={handleSwitchToSignup} />
+    );
   };
 
   return (
-    <div className="app">
+    <>
       {renderContent()}
-    </div>
+    </>
   );
 }
 

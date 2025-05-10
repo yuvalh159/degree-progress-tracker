@@ -106,8 +106,12 @@ export default function CourseRow({
             <td className="px-3 py-2">
                 <div className="flex gap-2 justify-end">
                     {course.isEditing ? (
-                        <button draggable={false} onClick={() => toggleEdit(course.id)} className="inline-flex items-center text-sm google-btn-primary py-1 px-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <button
+                            draggable={false}
+                            onClick={() => toggleEdit(course.id)}
+                            className="google-btn-primary text-sm inline-flex items-center"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 rtl:ml-1 rtl:mr-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             שמור

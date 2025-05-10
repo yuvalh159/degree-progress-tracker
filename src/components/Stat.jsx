@@ -11,14 +11,14 @@ export default function Stat({ label, value, required }) {
     const barColorClass = colors.bar.replace('bg-', '');
 
     return (
-        <div className={`google-card p-2 ${colors.bg} border border-gray-100 rounded-md shadow-sm`}>
+        <div className={`google-card p-3 ${colors.bg} border border-gray-100 rounded-md shadow-sm`}>
             <div className="flex justify-between items-center">
-                <span className={`text-xs font-medium ${colors.text}`}>{label}</span>
+                <span className={`text-sm font-medium ${colors.text}`}>{label}</span>
                 <span className={`text-sm font-bold ${colors.text}`}>{value.toFixed(1)}</span>
             </div>
 
             {/* Progress bar */}
-            <div className="w-full h-1.5 bg-white/50 rounded-full overflow-hidden my-1.5">
+            <div className={`w-full h-2 bg-white/50 rounded-full overflow-hidden my-2`}>
                 <div
                     className={`h-full ${colors.bar}`}
                     style={{ width: `${percentComplete}%` }}
@@ -27,7 +27,7 @@ export default function Stat({ label, value, required }) {
 
             {/* Required amount */}
             <div className="flex justify-end">
-                <span className={`text-xs ${colors.text} opacity-60`}>{required.toFixed(1)}</span>
+                <span className={`text-sm ${colors.text} opacity-60`}>{required.toFixed(1)}</span>
             </div>
         </div>
     );

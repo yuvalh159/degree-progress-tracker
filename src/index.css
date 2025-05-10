@@ -11,28 +11,29 @@ html {
 
 body {
   background-color: #f9f9f9;
+  /* This will be overridden by App.jsx's bg-stone-50 for the main content area */
   color: #3c4043;
   font-family: 'Roboto', 'Google Sans', sans-serif;
   max-width: 100%;
   overflow-x: hidden;
 }
 
-/* Google-inspired custom styles with orange theme */
+/* Google-inspired custom styles with a new theme */
 @layer components {
   .google-card {
-    @apply rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-gray-200;
+    @apply rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-stone-200;
   }
-  
+
   .google-btn-primary {
-    @apply bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-md px-4 py-2 transition duration-200 ease-in-out;
+    @apply bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-md px-4 py-2 transition duration-200 ease-in-out shadow-sm hover:shadow-md;
   }
-  
+
   .google-btn-secondary {
-    @apply bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-300 font-medium rounded-md px-4 py-2 transition duration-200 ease-in-out;
+    @apply bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 font-medium rounded-md px-4 py-2 transition duration-200 ease-in-out shadow-sm hover:shadow-md;
   }
-  
+
   .google-input {
-    @apply border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200;
+    @apply border-stone-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-white;
   }
 
   .google-container {
@@ -41,9 +42,11 @@ body {
 
   .google-header {
     @apply text-2xl font-medium text-gray-800 mb-2;
+    /* Consider stone-800 if a full palette shift is desired */
   }
 
   .google-subheader {
     @apply text-base font-normal text-gray-600 mb-6;
+    /* Consider stone-600 */
   }
 }
