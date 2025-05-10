@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 
 // Configure the workerSrc for PDF.js. This is crucial for it to work.
-// Option 1: Copy 'pdf.worker.min.mjs' (or .js) from 'node_modules/pdfjs-dist/build/'
-// to your 'public/js/' directory and use the path below.
-// Make sure the 'public/js' directory exists or adjust the path accordingly.
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/js/pdf.worker.min.mjs';
+const base_url = import.meta.env.BASE_URL || '/'; // Ensure fallback if BASE_URL is undefined
+const workerSrcPath = `${base_url}js/pdf.worker.min.mjs`.replace('//', '/'); // Construct path and remove double slashes if base_url is '/'
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrcPath;
 
 // Option 2: Use a CDN (can be unreliable or cause issues like version mismatch or CSP problems)
 // pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
