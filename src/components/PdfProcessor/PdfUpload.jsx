@@ -9,64 +9,88 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrcPath;
 // Option 2: Use a CDN (can be unreliable or cause issues like version mismatch or CSP problems)
 // pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
+// Helper function to check if a string is purely numeric (allowing for decimals for points)
+function isNumeric(str) {
+    if (typeof str !== 'string') return false;
+    return /^\d+(?:\.\d+)?$/.test(str.trim());
+}
+
 // Helper function to parse the extracted text
 const parseExtractedText = (text) => {
-    console.log("Starting text parsing with revised regex and line handling...");
-    const lines = text.split('\n').filter(line => line.trim() !== '');
+    console.log("Starting text parsing with multi-line sequential logic...");
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line !== '');
     let degreeName = 'Not Found';
     const courses = [];
-
-    // Regex to find degree name
-    const degreeRegex = /מוסמך למדעים ב(.*?)(?:לתואר|בפקולטה|\s+\d{2,3}\.\d|\s+הנקודות)/i;
-
-    // Regex for course lines: CODE NAME POINTS GRADE SEMESTER_INFO
-    // Adjusted to be a bit more flexible with spacing and allow for course names that might have numbers but not at the start of points/grade.
-    const courseLineRegex = /^(\d{8,10})\s+(.+?)\s+(\d+(?:\.\d)?(?:\s+|$))\s*([\d\w\s"'-֐-׿]+?)\s+(\d{4}-\d{4}\s+(?:אביב|חורף|קיץ)\s+תש[פ-ץ]{2}[א-ת])$/;
-    const headerLine = 'מקצוע ניקוד ציון סמסטר';
-
     let foundDegree = false;
-    for (const line of lines) {
-        const trimmedLine = line.trim();
-        if (!foundDegree) {
-            const degreeMatch = trimmedLine.match(degreeRegex);
-            if (degreeMatch && degreeMatch[1]) {
-                degreeName = degreeMatch[1].trim(); // Trim the captured group
-                console.log(`Found degree: ${degreeName}`);
-                foundDegree = true;
-            }
+
+    const courseCodeRegex = /^\d{8,10}$/;
+    const headerLineText = 'מקצוע ניקוד ציון סמסטר'; // Text of the header line to skip
+
+    for (let i = 0; i < lines.length; i++) {
+        const currentLine = lines[i];
+
+        // Try to find degree (once)
+        if (!foundDegree && currentLine.startsWith("מוסמך למדעים ב")) {
+            degreeName = currentLine.substring("מוסמך למדעים ב".length).trim();
+            console.log(`Found degree: ${degreeName}`);
+            foundDegree = true;
+            // continue; // Degree line shouldn't be a course code, but continue just in case
         }
 
-        if (trimmedLine === headerLine) {
-            console.log("Skipping header line:", trimmedLine);
+        // Skip known header lines for courses
+        if (currentLine === headerLineText) {
+            console.log("Skipping table header line:", currentLine);
             continue;
         }
 
-        if (!/^\d{8,10}/.test(trimmedLine)) {
-            // console.log("Skipping non-course line (no code prefix):", trimmedLine);
-            continue;
-        }
+        // Course parsing logic
+        if (courseCodeRegex.test(currentLine)) {
+            const code = currentLine;
+            let name = "N/A";
+            let points = "0"; // Default points
+            let grade = "N/A";
+            let semester = "N/A";
+            let linesConsumedForCourse = 0; // How many lines to advance i
 
-        const courseMatch = trimmedLine.match(courseLineRegex);
-        if (courseMatch) {
-            courses.push({
-                code: courseMatch[1]?.trim(),
-                name: courseMatch[2]?.trim(),
-                points: courseMatch[3]?.trim(), // Points group itself might have trailing space due to (\s+|$) so trim
-                grade: courseMatch[4]?.trim(),
-                semester: courseMatch[5]?.trim()
-            });
-        } else {
-            if (/^\d{8,10}/.test(trimmedLine)) {
-                console.log("Partial match (code found) but full regex failed for line:", trimmedLine);
+            if (i + 1 < lines.length) {
+                name = lines[i + 1];
+                linesConsumedForCourse = 1; // Consumed name
+
+                if (i + 2 < lines.length) {
+                    const potentialPointsOrGrade = lines[i + 2];
+                    if (isNumeric(potentialPointsOrGrade)) { // It's points
+                        points = potentialPointsOrGrade;
+                        linesConsumedForCourse = 2; // Consumed name, points
+                        if (i + 3 < lines.length) { // Grade expected next
+                            grade = lines[i + 3];
+                            linesConsumedForCourse = 3; // Consumed name, points, grade
+                            if (i + 4 < lines.length) { // Semester expected next
+                                semester = lines[i + 4];
+                                linesConsumedForCourse = 4; // Consumed name, points, grade, semester
+                            }
+                        }
+                    } else { // It's a grade (points are assumed to be 0 or not applicable)
+                        grade = potentialPointsOrGrade;
+                        linesConsumedForCourse = 2; // Consumed name, grade
+                        if (i + 3 < lines.length) { // Semester expected next
+                            semester = lines[i + 3];
+                            linesConsumedForCourse = 3; // Consumed name, grade, semester
+                        }
+                    }
+                }
             }
+
+            courses.push({ code, name, points, grade, semester });
+            console.log("Added course:", { code, name, points, grade, semester });
+            i += linesConsumedForCourse; // Advance index by number of lines processed for this course
         }
     }
 
     console.log("Parsing complete. Degree:", degreeName, "Courses found:", courses.length);
-    if (courses.length === 0 && lines.length > 5) { // Reduced threshold for placeholder
+    if (courses.length === 0 && lines.length > 5) {
         courses.push({
             code: "ERROR",
-            name: "No courses parsed - Check Regex and Console Logs from Piped Text",
+            name: "No courses parsed - Check multi-line logic and console logs",
             points: "0",
             grade: "N/A",
             semester: "Parsing Incomplete"
@@ -100,16 +124,11 @@ function PdfUpload() {
                     console.log(`Processing page ${i}...`);
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
-                    // Changed join from ' ' to '\n' to better simulate lines
                     const pageText = textContent.items.map(item => item.str).join('\n');
-                    fullText += pageText + '\n\n'; // Add double newline between pages
+                    fullText += pageText + '\n\n';
                 }
 
                 setExtractedText(fullText); // Save the text with newlines for potential debugging
-                // Log a version of the text specifically for regex testing if it's too long for one console line
-                // This replaces multiple spaces/newlines with single ones for better readability in logs
-                // const condensedTextForLog = fullText.replace(/\s\s+/g, ' ');
-                // console.log("Extracted Text (condensed for log):", condensedTextForLog);
                 console.log("Extracted Text (raw with newlines from items):", fullText);
 
                 const parsedData = parseExtractedText(fullText);
