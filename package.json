@@ -23,7 +23,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "prepare-pdf-worker": "mkdirp public/js && copyfiles -f node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/js"
   },
   "eslintConfig": {
     "extends": [
@@ -47,8 +48,10 @@
     "@tailwindcss/postcss": "^4.1.5",
     "@vitejs/plugin-react": "^4.1.1",
     "autoprefixer": "^10.4.21",
+    "copyfiles": "^2.4.1",
     "gh-pages": "^6.3.0",
     "jsdom": "^22.1.0",
+    "mkdirp": "^3.0.1",
     "postcss": "^8.5.3",
     "postcss-import": "^16.1.0",
     "tailwindcss": "^3.3.0",

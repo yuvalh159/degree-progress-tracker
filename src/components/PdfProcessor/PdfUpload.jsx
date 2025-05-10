@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 
 // Configure the workerSrc for PDF.js. This is crucial for it to work.
-// Option 1: Copy 'pdf.worker.min.js' from 'node_modules/pdfjs-dist/build/'
-// to your 'public/js/' directory and uncomment the line below.
+// Option 1: Copy 'pdf.worker.min.mjs' (or .js) from 'node_modules/pdfjs-dist/build/'
+// to your 'public/js/' directory and use the path below.
 // Make sure the 'public/js' directory exists or adjust the path accordingly.
-// pdfjsLib.GlobalWorkerOptions.workerSrc = '/js/pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/js/pdf.worker.min.mjs';
 
-// Option 2: Use a CDN (easier for initial setup, but has external dependency)
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Option 2: Use a CDN (can be unreliable or cause issues like version mismatch or CSP problems)
+// pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 // Helper function to parse the extracted text
 const parseExtractedText = (text) => {
