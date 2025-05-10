@@ -11,74 +11,72 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrcPath;
 
 // Helper function to parse the extracted text
 const parseExtractedText = (text) => {
-    console.log("Starting text parsing...");
-    const lines = text.split('\n').filter(line => line.trim() !== ''); // Split by newline and remove empty lines
+    console.log("Starting text parsing with new regex...");
+    const lines = text.split('\n').filter(line => line.trim() !== '');
     let degreeName = 'Not Found';
     const courses = [];
 
-    // TODO: Refine regex patterns based on actual text output and PDF structure
-    // Regex to find degree name (very basic, needs refinement)
-    const degreeRegex = /לתואר\s+מוסמך\s+ב(.+)/i; // Example: "לתואר מוסמך ב[Degree Name]"
+    // Regex to find degree name (from "מוסמך למדעים ב[Degree Name]")
+    const degreeRegex = /מוסמך למדעים ב([^לתואר]+)/i;
+    // Alternative: בפקולטה\s+([^\n]+?)(?=\s+\d|\s+הנקודות|
+    // Or, for a more general approach if the title varies:
+    // Look for a line containing "לתואר" and "בפקולטה" then try to extract smartly.
+    // For now, using the specific one from the provided text.
 
-    // Regex to identify a course line and capture its parts.
-    // This is highly dependent on the text extraction order and spacing.
-    // Assuming structure: Course Name | Points | Grade | Semester (Hebrew RTL means semester might appear first in string)
-    // A more robust approach might involve looking for specific keywords or anchors for each field if simple regex fails.
-    // Example structure from image (RTL): מקצוע (course name) | ניקוד (points) | ציון (grade) | סמסטר (semester)
-    // When extracted as LTR string, semester might be first or last depending on line breaks and bidi algo.
-    // Let's assume for now a line could look like: [Semester] [Grade] [Points] [Course Name]
-    // OR [Course Name] [Points] [Grade] [Semester]
-    // This will need significant testing and refinement with actual extracted text.
-    const courseLineRegex = /^(.+?)\s+(\d(?:\.\d)?)\s+([\d\w\s-֐-׿]+?)\s+((?:אביב|חורף|קיץ)\s+\S+\s+\d{4}-\d{4}|.+)$/i;
-    // Explanation of a *very* hypothetical courseLineRegex (needs heavy adjustment):
-    // (.+?)                     - Group 1: Course Name (non-greedy match of any chars)
-    // \s+                       - Space(s)
-    // (\d(?:\.\d)?)            - Group 2: Points (digit, optionally with .digit)
-    // \s+                       - Space(s)
-    // ([\d\w\s-֐-׿]+?) - Group 3: Grade (digits, words, spaces, Hebrew chars, non-greedy)
-    // \s+                       - Space(s)
-    // ((?:אביב|חורף|קיץ)\s+\S+\s+\d{4}-\d{4}|.+) - Group 4: Semester (specific format or fallback)
+    // Regex for course lines: CODE NAME POINTS GRADE SEMESTER_INFO
+    const courseLineRegex = /^(\d{8,10})\s+(.+?)\s+(\d+(?:\.\d)?)\s+([\d\w\s"'-֐-׿]+?)\s+(\d{4}-\d{4}\s+(?:אביב|חורף|קיץ)\s+תש[פ-ץ]{2}[א-ת])$/;
+    const headerLine = 'מקצוע ניקוד ציון סמסטר';
 
-    lines.forEach(line => {
-        // Attempt to find degree
-        const degreeMatch = line.match(degreeRegex);
-        if (degreeMatch && degreeMatch[1]) {
-            degreeName = degreeMatch[1].trim();
-            console.log(`Found degree: ${degreeName}`);
+    let foundDegree = false;
+    for (const line of lines) {
+        if (!foundDegree) {
+            const degreeMatch = line.match(degreeRegex);
+            if (degreeMatch && degreeMatch[1]) {
+                degreeName = degreeMatch[1].trim();
+                console.log(`Found degree: ${degreeName}`);
+                foundDegree = true; // Stop searching for degree once found
+            }
         }
 
-        // Attempt to find courses (this is a placeholder and will likely need a more sophisticated approach)
-        // For now, let's assume course lines are identifiable and we are trying to match the structure.
-        // A better way might be to identify table boundaries first.
-        // The regex below is a *very* rough guess and will need to be built based on actual output
-        // E.g. Looking for lines that have a year range typical of semesters
-        if (/\d{4}-\d{4}/.test(line)) { // Very simple check if line might be a course
-            // This is where the complex regex for course line would be tried
-            // const courseMatch = line.match(courseLineRegex);
-            // if (courseMatch) {
-            //     courses.push({
-            //         name: courseMatch[1]?.trim(), // Adjust indices based on actual regex
-            //         points: courseMatch[2]?.trim(),
-            //         grade: courseMatch[3]?.trim(),
-            //         semester: courseMatch[4]?.trim()
-            //     });
-            // }
-            // For now, just log potential course lines for inspection
-            console.log("Potential course line: ", line);
+        if (line.trim() === headerLine) {
+            console.log("Skipping header line:", line);
+            continue;
         }
-    });
 
-    // Placeholder: Manually add a dummy course if none found, for testing display
-    if (courses.length === 0 && lines.length > 0) {
+        // Skip lines that are clearly not course data (e.g. page footers, general text)
+        if (!/^\d{8,10}/.test(line.trim())) { // If line doesn't start with a course code
+            // Further checks can be added here if needed, e.g. length, keywords etc.
+            // console.log("Skipping non-course line (no code prefix):", line);
+            continue;
+        }
+
+        const courseMatch = line.trim().match(courseLineRegex);
+        if (courseMatch) {
+            courses.push({
+                code: courseMatch[1]?.trim(), // Capture course code
+                name: courseMatch[2]?.trim(),
+                points: courseMatch[3]?.trim(),
+                grade: courseMatch[4]?.trim(),
+                semester: courseMatch[5]?.trim()
+            });
+        } else {
+            // Log lines that started with a course code but didn't match the full regex, for debugging
+            if (/^\d{8,10}/.test(line.trim())) {
+                console.log("Partial match (code found) but full regex failed for line:", line.trim());
+            }
+        }
+    }
+
+    console.log("Parsing complete. Degree:", degreeName, "Courses found:", courses.length);
+    if (courses.length === 0 && lines.length > 10) { // Only add placeholder if parsing likely failed significantly
         courses.push({
-            name: "Placeholder Course - Check Regex",
+            code: "ERROR",
+            name: "No courses parsed - Check Regex and Console Logs",
             points: "0",
             grade: "N/A",
             semester: "Parsing Incomplete"
         });
     }
-
-    console.log("Parsing complete. Degree:", degreeName, "Courses found:", courses.length);
     return { degreeName, courses };
 };
 
@@ -180,6 +178,7 @@ function PdfUpload() {
                         <ul style={{ listStyleType: 'none', padding: 0 }}>
                             {parsedPdfData.courses.map((course, index) => (
                                 <li key={index} style={{ border: '1px solid #eee', padding: '5px', marginBottom: '5px' }}>
+                                    <strong>Code:</strong> {course.code} <br />
                                     <strong>Name:</strong> {course.name} <br />
                                     <strong>Points:</strong> {course.points} <br />
                                     <strong>Grade:</strong> {course.grade} <br />
