@@ -11,67 +11,62 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrcPath;
 
 // Helper function to parse the extracted text
 const parseExtractedText = (text) => {
-    console.log("Starting text parsing with new regex...");
+    console.log("Starting text parsing with revised regex and line handling...");
     const lines = text.split('\n').filter(line => line.trim() !== '');
     let degreeName = 'Not Found';
     const courses = [];
 
-    // Regex to find degree name (from "מוסמך למדעים ב[Degree Name]")
-    const degreeRegex = /מוסמך למדעים ב([^לתואר]+)/i;
-    // Alternative: בפקולטה\s+([^\n]+?)(?=\s+\d|\s+הנקודות|
-    // Or, for a more general approach if the title varies:
-    // Look for a line containing "לתואר" and "בפקולטה" then try to extract smartly.
-    // For now, using the specific one from the provided text.
+    // Regex to find degree name
+    const degreeRegex = /מוסמך למדעים ב(.*?)(?:לתואר|בפקולטה|\s+\d{2,3}\.\d|\s+הנקודות)/i;
 
     // Regex for course lines: CODE NAME POINTS GRADE SEMESTER_INFO
-    const courseLineRegex = /^(\d{8,10})\s+(.+?)\s+(\d+(?:\.\d)?)\s+([\d\w\s"'-֐-׿]+?)\s+(\d{4}-\d{4}\s+(?:אביב|חורף|קיץ)\s+תש[פ-ץ]{2}[א-ת])$/;
+    // Adjusted to be a bit more flexible with spacing and allow for course names that might have numbers but not at the start of points/grade.
+    const courseLineRegex = /^(\d{8,10})\s+(.+?)\s+(\d+(?:\.\d)?(?:\s+|$))\s*([\d\w\s"'-֐-׿]+?)\s+(\d{4}-\d{4}\s+(?:אביב|חורף|קיץ)\s+תש[פ-ץ]{2}[א-ת])$/;
     const headerLine = 'מקצוע ניקוד ציון סמסטר';
 
     let foundDegree = false;
     for (const line of lines) {
+        const trimmedLine = line.trim();
         if (!foundDegree) {
-            const degreeMatch = line.match(degreeRegex);
+            const degreeMatch = trimmedLine.match(degreeRegex);
             if (degreeMatch && degreeMatch[1]) {
-                degreeName = degreeMatch[1].trim();
+                degreeName = degreeMatch[1].trim(); // Trim the captured group
                 console.log(`Found degree: ${degreeName}`);
-                foundDegree = true; // Stop searching for degree once found
+                foundDegree = true;
             }
         }
 
-        if (line.trim() === headerLine) {
-            console.log("Skipping header line:", line);
+        if (trimmedLine === headerLine) {
+            console.log("Skipping header line:", trimmedLine);
             continue;
         }
 
-        // Skip lines that are clearly not course data (e.g. page footers, general text)
-        if (!/^\d{8,10}/.test(line.trim())) { // If line doesn't start with a course code
-            // Further checks can be added here if needed, e.g. length, keywords etc.
-            // console.log("Skipping non-course line (no code prefix):", line);
+        if (!/^\d{8,10}/.test(trimmedLine)) {
+            // console.log("Skipping non-course line (no code prefix):", trimmedLine);
             continue;
         }
 
-        const courseMatch = line.trim().match(courseLineRegex);
+        const courseMatch = trimmedLine.match(courseLineRegex);
         if (courseMatch) {
             courses.push({
-                code: courseMatch[1]?.trim(), // Capture course code
+                code: courseMatch[1]?.trim(),
                 name: courseMatch[2]?.trim(),
-                points: courseMatch[3]?.trim(),
+                points: courseMatch[3]?.trim(), // Points group itself might have trailing space due to (\s+|$) so trim
                 grade: courseMatch[4]?.trim(),
                 semester: courseMatch[5]?.trim()
             });
         } else {
-            // Log lines that started with a course code but didn't match the full regex, for debugging
-            if (/^\d{8,10}/.test(line.trim())) {
-                console.log("Partial match (code found) but full regex failed for line:", line.trim());
+            if (/^\d{8,10}/.test(trimmedLine)) {
+                console.log("Partial match (code found) but full regex failed for line:", trimmedLine);
             }
         }
     }
 
     console.log("Parsing complete. Degree:", degreeName, "Courses found:", courses.length);
-    if (courses.length === 0 && lines.length > 10) { // Only add placeholder if parsing likely failed significantly
+    if (courses.length === 0 && lines.length > 5) { // Reduced threshold for placeholder
         courses.push({
             code: "ERROR",
-            name: "No courses parsed - Check Regex and Console Logs",
+            name: "No courses parsed - Check Regex and Console Logs from Piped Text",
             points: "0",
             grade: "N/A",
             semester: "Parsing Incomplete"
@@ -105,16 +100,18 @@ function PdfUpload() {
                     console.log(`Processing page ${i}...`);
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
-                    // textContent.items is an array of text items. item.str is the text.
-                    // We join them with spaces, and join pages with double newlines.
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    fullText += pageText + '\n\n';
+                    // Changed join from ' ' to '\n' to better simulate lines
+                    const pageText = textContent.items.map(item => item.str).join('\n');
+                    fullText += pageText + '\n\n'; // Add double newline between pages
                 }
 
-                setExtractedText(fullText);
-                console.log("Extracted Text:", fullText);
+                setExtractedText(fullText); // Save the text with newlines for potential debugging
+                // Log a version of the text specifically for regex testing if it's too long for one console line
+                // This replaces multiple spaces/newlines with single ones for better readability in logs
+                // const condensedTextForLog = fullText.replace(/\s\s+/g, ' ');
+                // console.log("Extracted Text (condensed for log):", condensedTextForLog);
+                console.log("Extracted Text (raw with newlines from items):", fullText);
 
-                // Parse the extracted text
                 const parsedData = parseExtractedText(fullText);
                 setParsedPdfData(parsedData);
                 console.log("Parsed Data:", parsedData);
