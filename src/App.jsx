@@ -22,6 +22,7 @@ import EmailVerification from "./components/auth/EmailVerification";
 import { useAuth } from './context/AuthContext';
 import { auth, db } from "./firebaseConfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import PdfUpload from "./components/PdfProcessor/PdfUpload";
 
 // Helper function to load JSON objects/arrays from localStorage
 const loadJsonFromLocalStorage = (key, defaultValue) => {
@@ -253,6 +254,10 @@ function DegreeProgressAppContent() {
     setSemesterToDelete(sem);
   };
 
+  const handleSemesterCancelDelete = () => {
+    setSemesterToDelete(null);
+  };
+
   const performSemesterDelete = () => {
     if (semesterToDelete) {
       setSemesters(prev => prev.filter(s => s !== semesterToDelete));
@@ -368,11 +373,11 @@ function DegreeProgressAppContent() {
   };
 
   return (
-    <div className="google-container py-4">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4 font-sans relative">
       <SemesterConfirmationModal
         semesterToDelete={semesterToDelete}
         onConfirm={performSemesterDelete}
-        onCancel={() => setSemesterToDelete(null)}
+        onCancel={handleSemesterCancelDelete}
       />
 
       <RequirementsEditorModal
@@ -406,9 +411,13 @@ function DegreeProgressAppContent() {
         currentProfile={currentProfile}
         availableProfiles={Object.keys(degreeProfiles)}
         changeProfile={changeProfile}
-        setShowReqEditor={setShowReqEditor}
-        setShowDegreeManagerModal={setShowDegreeManagerModal}
+        setShowReqEditor={() => setShowReqEditor(true)}
+        setShowDegreeManagerModal={() => setShowDegreeManagerModal(true)}
       />
+
+      <div className="w-full max-w-4xl my-4 p-4 bg-white shadow-md rounded-lg">
+        <PdfUpload />
+      </div>
 
       <SummaryStats
         gpa={gpa}
