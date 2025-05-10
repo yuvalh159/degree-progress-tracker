@@ -628,8 +628,17 @@ function DegreeProgressAppContent({ isGuest, exitGuestMode }) {
         onLogout={handleHeaderLogout}
       />
 
-      <div className="flex justify-center my-6 pdf-upload-section">
+      <div className="flex justify-center items-center my-6 pdf-upload-section">
         <PdfUpload onPdfDataParsed={handlePdfDataParsed} />
+        <button
+          type="button"
+          className="ml-2 rtl:mr-2 rtl:ml-0 h-10 w-10 flex items-center justify-center rounded-md bg-teal-600 hover:bg-teal-700 text-white shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors duration-150"
+          onClick={() => alert("יש לצרף גליון ציונים של כלל התואר מאתר sap דרך בקשות")}
+        >
+          <svg viewBox="0 0 20 20" fill="currentColor" className="h-6 w-6">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+          </svg>
+        </button>
       </div>
 
       <SummaryStats

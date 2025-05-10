@@ -201,6 +201,7 @@ function PdfUpload({ onPdfDataParsed }) {
     const [processingStatus, setProcessingStatus] = useState('');
     const [error, setError] = useState('');
     const fileInputRef = useRef(null); // Ref for the hidden file input
+    const inputRef = useRef(null);
 
     const handleFileChange = async (event) => {
         const file = event.target.files[0];
@@ -267,24 +268,25 @@ function PdfUpload({ onPdfDataParsed }) {
     };
 
     return (
-        <div className="flex flex-col items-center dir-rtl">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center">
+            <input
+                type="file"
+                id="pdf-upload-input"
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="hidden" // Keep the actual input hidden
+                ref={inputRef} // Assign the ref here
+            />
+            {/* Styled label that acts as the button */}
             <label
                 htmlFor="pdf-upload-input"
-                className="google-btn-primary text-sm w-auto cursor-pointer inline-flex items-center justify-center mb-3"
+                className="google-btn-primary text-base sm:text-sm px-4 py-2 h-10 cursor-pointer flex items-center justify-center w-full" // Added h-10 and w-full
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 rtl:mr-2 rtl:ml-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 rtl:ml-2 rtl:mr-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
                 {selectedFile ? selectedFile.name : "בחר/י קובץ PDF"}
             </label>
-            <input
-                type="file"
-                accept=".pdf"
-                onChange={handleFileChange}
-                ref={fileInputRef}
-                className="hidden" // Hide the actual input
-                id="pdf-upload-input"
-            />
 
             {processingStatus && !error && (
                 <p className="text-sm text-blue-600 mt-2 mb-2 text-center">סטטוס: {processingStatus}</p>
