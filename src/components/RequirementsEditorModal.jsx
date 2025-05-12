@@ -1,5 +1,6 @@
-import React from 'react';
-import { CATEGORY_COLORS } from '../constants';
+import React, { useState, useEffect, useMemo } from 'react';
+import { XMarkIcon } from '@heroicons/react/24/solid';
+import { CATEGORY_COLORS, ELECTIVE_CATEGORIES } from '../constants';
 
 export default function RequirementsEditorModal({
     showReqEditor,
@@ -15,6 +16,8 @@ export default function RequirementsEditorModal({
 }) {
     if (!showReqEditor) return null;
 
+    const defaultColors = CATEGORY_COLORS["default"] || { bg: "bg-gray-50", text: "text-gray-700" };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
             <div className="google-card bg-white p-4 w-full max-w-md">
@@ -28,22 +31,31 @@ export default function RequirementsEditorModal({
                 </div>
 
                 <div className="space-y-2 mb-4 max-h-[60vh] overflow-y-auto">
-                    {categories.map(cat => {
-                        const colors = CATEGORY_COLORS[cat] || { bg: "bg-gray-100", text: "text-gray-700" };
+                    {/* Removed log before loop */}
+
+                    {Object.entries(requirements).map(([category, points]) => {
+                        const colors = CATEGORY_COLORS[category] || CATEGORY_COLORS.default;
+                        const isElective = ELECTIVE_CATEGORIES.includes(category);
+                        const indentClass = isElective ? 'ml-4' : ''; // Indent elective categories
+
+                        // Removed logs from inside loop
+
                         return (
-                            <div key={cat} className={`flex justify-between items-center p-2 rounded-md ${colors.bg}`}>
-                                <span className={`text-sm font-medium ${colors.text}`}>{cat}</span>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="0.5"
-                                    value={requirements[cat]}
-                                    onChange={e => {
-                                        const v = Number(e.target.value);
-                                        setRequirements(prev => ({ ...prev, [cat]: isNaN(v) ? 0 : v }));
-                                    }}
-                                    className="google-input text-sm w-24 text-center py-1"
-                                />
+                            <div key={category} className={`p-3 mb-2 rounded-md shadow-sm flex justify-between items-center ${colors.gradient} ${indentClass}`}>
+                                <span className={`font-semibold ${colors.text}`}>{category}:</span>
+                                <div className="flex items-center">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.5"
+                                        value={points}
+                                        onChange={e => {
+                                            const v = Number(e.target.value);
+                                            setRequirements(prev => ({ ...prev, [category]: isNaN(v) ? 0 : v }));
+                                        }}
+                                        className="google-input text-sm w-24 text-center py-1"
+                                    />
+                                </div>
                             </div>
                         );
                     })}

@@ -1,18 +1,20 @@
 // Predefined semester options
 export const SEMESTER_OPTIONS = ["א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "קיץ"];
 
-// Color mappings for each course category with softer, more minimalistic colors
+// Color mappings - Pastel Gradients
 export const CATEGORY_COLORS = {
-    "חובה": { bg: "bg-blue-50", text: "text-blue-600", bar: "bg-blue-500" },
-    "בחירה כללי": { bg: "bg-orange-50", text: "text-orange-600", bar: "bg-orange-500" },
-    "בחירה א": { bg: "bg-green-50", text: "text-green-600", bar: "bg-green-500" },
-    "בחירה ב": { bg: "bg-yellow-50", text: "text-yellow-600", bar: "bg-yellow-500" },
-    "בחירה ג": { bg: "bg-teal-50", text: "text-teal-600", bar: "bg-teal-500" },
-    "בחירה ד": { bg: "bg-emerald-50", text: "text-emerald-600", bar: "bg-emerald-500" },
-    "מלג": { bg: "bg-purple-50", text: "text-purple-600", bar: "bg-purple-500" },
-    "חופשית": { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-100", bar: "bg-amber-500" },
-    "ספורט": { bg: "bg-cyan-50", text: "text-cyan-700", border: "border-cyan-100", bar: "bg-cyan-500" },
-    "גמר": { bg: "bg-red-50", text: "text-red-700", border: "border-red-100", bar: "bg-red-500" }
+    "חובה": { gradient: "bg-gradient-to-r from-lime-50 to-lime-100", text: "text-lime-700", bar: "bg-lime-400" },
+    "בחירה א": { gradient: "bg-gradient-to-r from-green-100 to-green-200", text: "text-green-700", bar: "bg-green-400" },
+    "בחירה ב": { gradient: "bg-gradient-to-r from-emerald-100 to-emerald-200", text: "text-emerald-700", bar: "bg-emerald-400" },
+    "בחירה ג": { gradient: "bg-gradient-to-r from-teal-100 to-teal-200", text: "text-teal-700", bar: "bg-teal-400" },
+    "בחירה ד": { gradient: "bg-gradient-to-r from-cyan-100 to-cyan-200", text: "text-cyan-700", bar: "bg-cyan-400" },
+    "בחירה כללי": { gradient: "bg-gradient-to-r from-sky-100 to-sky-200", text: "text-sky-700", bar: "bg-sky-400" },
+    "מלג": { gradient: "bg-gradient-to-r from-lime-100 to-lime-200", text: "text-lime-800", bar: "bg-lime-500" },
+    "חופשית": { gradient: "bg-gradient-to-r from-green-100 to-green-200", text: "text-green-800", bar: "bg-green-500" },
+    "ספורט": { gradient: "bg-gradient-to-r from-emerald-100 to-emerald-200", text: "text-emerald-800", bar: "bg-emerald-500" },
+    "גמר": { gradient: "bg-gradient-to-r from-teal-100 to-teal-200", text: "text-teal-800", bar: "bg-teal-500" },
+    // Fallback/Default
+    "default": { gradient: "bg-gradient-to-r from-gray-100 to-gray-200", text: "text-gray-800", bar: "bg-gray-400" }
 };
 
 // Electve categories for hierarchy display

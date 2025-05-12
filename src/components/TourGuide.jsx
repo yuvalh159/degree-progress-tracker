@@ -43,7 +43,8 @@ const TOUR_STEPS = [
     }
 ];
 
-const TourGuide = ({ run: runSignal, onComplete }) => {
+// Update component to accept and render children
+const TourGuide = ({ children, run: runSignal, onComplete }) => {
     const [internalRunTour, setInternalRunTour] = useState(false);
     const [steps] = useState(TOUR_STEPS);
 
@@ -76,73 +77,78 @@ const TourGuide = ({ run: runSignal, onComplete }) => {
         }
     };
 
-    // If internalRunTour is false, don't render Joyride to ensure it fully resets if re-triggered
-    if (!internalRunTour) {
-        return null;
-    }
+    // Don't return null, always render children. Joyride will overlay if internalRunTour is true.
+    // if (!internalRunTour) {
+    //     return children; // Render children even if tour is not running
+    // }
 
     return (
-        <Joyride
-            steps={steps}
-            run={internalRunTour} // Controlled by internal state, triggered by prop
-            callback={handleJoyrideCallback}
-            continuous={true}
-            showProgress={true}
-            showSkipButton={true}
-            locale={{
-                back: 'הקודם',
-                close: 'סגור',
-                last: 'סיום',
-                next: 'הבא',
-                open: 'פתח חלון עזרה',
-                skip: 'דלג על הסיור',
-            }}
-            styles={{
-                options: {
-                    arrowColor: '#fff',
-                    backgroundColor: '#fff',
-                    primaryColor: '#0d6efd', // A Google-like blue
-                    textColor: '#333',
-                    zIndex: 10000, // Ensure it's on top of other elements
-                },
-                tooltip: {
-                    borderRadius: '8px',
-                    textAlign: 'right', // For RTL
-                    fontSize: '15px',
-                },
-                tooltipContainer: {
-                    textAlign: 'right', // For RTL
-                },
-                tooltipTitle: {
-                    textAlign: 'right', // For RTL
-                    fontWeight: 'bold',
-                    fontSize: '18px',
-                },
-                buttonNext: {
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                },
-                buttonBack: {
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                    marginRight: 'auto', // Push back button to the left for RTL
-                },
-                buttonSkip: {
-                    fontSize: '14px',
-                    color: '#666',
-                },
-                buttonClose: { // Style for the close button (X)
-                    position: 'absolute', // Ensure it's absolutely positioned if not already
-                    top: '10px',      // Adjust as needed for vertical alignment
-                    left: '10px',     // For RTL, this should push it to the far left of the tooltip header
-                    right: 'auto',
-                    // color: '#333', // Example: change color of X
-                },
-                overlay: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                }
-            }}
-        />
+        <>
+            {children} {/* Render the main application content */}
+            {internalRunTour && (
+                <Joyride
+                    steps={steps}
+                    run={internalRunTour}
+                    callback={handleJoyrideCallback}
+                    continuous={true}
+                    showProgress={true}
+                    showSkipButton={true}
+                    locale={{
+                        back: 'הקודם',
+                        close: 'סגור',
+                        last: 'סיום',
+                        next: 'הבא',
+                        open: 'פתח חלון עזרה',
+                        skip: 'דלג על הסיור',
+                    }}
+                    styles={{
+                        options: {
+                            arrowColor: '#fff',
+                            backgroundColor: '#fff',
+                            primaryColor: '#0d6efd', // A Google-like blue
+                            textColor: '#333',
+                            zIndex: 10000, // Ensure it's on top of other elements
+                        },
+                        tooltip: {
+                            borderRadius: '8px',
+                            textAlign: 'right', // For RTL
+                            fontSize: '15px',
+                        },
+                        tooltipContainer: {
+                            textAlign: 'right', // For RTL
+                        },
+                        tooltipTitle: {
+                            textAlign: 'right', // For RTL
+                            fontWeight: 'bold',
+                            fontSize: '18px',
+                        },
+                        buttonNext: {
+                            borderRadius: '4px',
+                            fontSize: '14px',
+                        },
+                        buttonBack: {
+                            borderRadius: '4px',
+                            fontSize: '14px',
+                            marginRight: 'auto', // Push back button to the left for RTL
+                        },
+                        buttonSkip: {
+                            fontSize: '14px',
+                            color: '#666',
+                        },
+                        buttonClose: { // Style for the close button (X)
+                            position: 'absolute', // Ensure it's absolutely positioned if not already
+                            top: '10px',      // Adjust as needed for vertical alignment
+                            left: '10px',     // For RTL, this should push it to the far left of the tooltip header
+                            right: 'auto',
+                            // color: '#333', // Example: change color of X
+                        },
+                        overlay: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                        }
+                    }}
+                />
+            )}
+        </>
     );
 };
 

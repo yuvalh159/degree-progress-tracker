@@ -70,7 +70,7 @@ const loadUserAppState = async (userId) => {
 };
 
 function DegreeProgressAppContent({ isGuest, exitGuestMode }) {
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
 
   // State for degree profiles
   const [degreeProfiles, setDegreeProfiles] = useState(() => loadJsonFromLocalStorage("degreeProfiles", INITIAL_DEGREE_PROFILES));
@@ -380,7 +380,44 @@ function DegreeProgressAppContent({ isGuest, exitGuestMode }) {
     setCategories(Object.keys(requirements));
   }, [requirements]);
 
-  // New function to add a custom category to the CURRENT profile's requirements
+  // Calculate progress using the hook - Capture the summary object
+  const { summary: progressSummary, gpa } = useProgress(courses, requirements); // Pass requirements here too!
+
+  // Memoized available profiles
+  const availableProfiles = useMemo(() => Object.keys(degreeProfiles), [degreeProfiles]);
+
+  // Effect to trigger tour on first load (after potential Firestore load)
+  useEffect(() => {
+    const tourHasBeenSeen = localStorage.getItem('degreeProgressTourSeen');
+    if (!tourHasBeenSeen) {
+      setShouldRunTour(true);
+    }
+  }, []);
+
+  const handleStartTourRequest = () => {
+    console.log("handleStartTourRequest triggered"); // DEBUG
+    localStorage.removeItem('degreeProgressTourSeen');
+    setShouldRunTour(true);
+  };
+
+  const handleTourCompletion = () => {
+    setShouldRunTour(false);
+    // TourGuide component will set 'degreeProgressTourSeen' in localStorage internally upon finish/skip
+  };
+
+  const handleHeaderLogout = async () => {
+    if (isGuest && typeof exitGuestMode === 'function') {
+      exitGuestMode(); // Call the function to exit guest mode
+    } else if (currentUser) {
+      try {
+        await logout(); // Use logout from useAuth
+        console.log("Logout successful from App");
+      } catch (error) {
+        console.error("Failed to log out from App:", error);
+      }
+    }
+  };
+
   const addCustomCategory = () => {
     if (newCategoryName.trim()) {
       const categoryName = newCategoryName.trim();
@@ -406,8 +443,6 @@ function DegreeProgressAppContent({ isGuest, exitGuestMode }) {
       }
     }
   };
-
-  const { summary, gpa } = useProgress(courses, requirements);
 
   const changeProfile = (profileName) => {
     if (degreeProfiles[profileName]) { // Check against stateful degreeProfiles
@@ -546,134 +581,100 @@ function DegreeProgressAppContent({ isGuest, exitGuestMode }) {
     }));
   };
 
-  // Effect to run the tour once for new users
-  useEffect(() => {
-    const tourHasBeenSeen = localStorage.getItem('degreeProgressTourSeen');
-    if (!tourHasBeenSeen) {
-      setShouldRunTour(true);
-    }
-  }, []);
-
-  const handleStartTourRequest = () => {
-    localStorage.removeItem('degreeProgressTourSeen'); // Clear so it feels like a fresh start
-    setShouldRunTour(true);
-  };
-
-  const handleTourCompletion = () => {
-    setShouldRunTour(false);
-    // TourGuide component will set 'degreeProgressTourSeen' in localStorage internally upon finish/skip
-  };
-
-  const handleHeaderLogout = async () => {
-    if (isGuest) {
-      // If it's a guest, exiting guest mode effectively takes them to auth screen
-      exitGuestMode();
-    } else if (currentUser) {
-      // Regular logout for registered user (this will be called from Header's own logout)
-      // This function in App is more for abstracting what happens on "logout" action from header
-      // Actual firebase logout is in AuthContext and called by Header
-      // Here, we just ensure guest state is cleared if somehow it was set.
-      if (typeof exitGuestMode === 'function') exitGuestMode(); // Clear guest just in case
-    }
-    // Navigation to auth screen will be handled by App component based on currentUser/isGuest state
-  };
-
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col p-4 font-sans relative">
-      <TourGuide
-        run={shouldRunTour}
-        onComplete={handleTourCompletion}
-      />
-      <SemesterConfirmationModal
-        semesterToDelete={semesterToDelete}
-        onConfirm={performSemesterDelete}
-        onCancel={handleSemesterCancelDelete}
-      />
-
-      <RequirementsEditorModal
-        showReqEditor={showReqEditor}
-        onClose={() => setShowReqEditor(false)}
-        categories={categories}
-        requirements={requirements}
-        setRequirements={(newReqs) => {
-          // This should update the current profile's requirements in degreeProfiles state
-          setDegreeProfiles(prev => ({
-            ...prev,
-            [currentProfile]: newReqs
-          }));
-        }}
-        newCategoryName={newCategoryName}
-        setNewCategoryName={setNewCategoryName}
-        newCategoryValue={newCategoryValue}
-        setNewCategoryValue={setNewCategoryValue}
-        addCustomCategory={addCustomCategory}
-      />
-
-      <DegreeManagerModal
-        showModal={showDegreeManagerModal}
-        onClose={() => setShowDegreeManagerModal(false)}
-        degreeProfiles={degreeProfiles}
-        addProfileFn={addDegreeProfile}
-        removeProfileFn={removeDegreeProfile}
-      />
-
-      <Header
-        currentProfile={currentProfile}
-        availableProfiles={Object.keys(degreeProfiles)}
-        changeProfile={changeProfile}
-        setShowReqEditor={() => setShowReqEditor(true)}
-        setShowDegreeManagerModal={() => setShowDegreeManagerModal(true)}
-        onStartTourRequest={handleStartTourRequest}
-        isGuest={isGuest}
-        onLogout={handleHeaderLogout}
-      />
-
-      <div className="flex justify-center items-center my-6 pdf-upload-section">
-        <PdfUpload onPdfDataParsed={handlePdfDataParsed} />
-        <button
-          type="button"
-          className="ml-2 rtl:mr-2 rtl:ml-0 h-10 w-10 flex items-center justify-center rounded-md bg-teal-600 hover:bg-teal-700 text-white shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors duration-150"
-          onClick={() => alert("יש לצרף גליון ציונים של כלל התואר מאתר sap דרך בקשות")}
-        >
-          <svg viewBox="0 0 20 20" fill="currentColor" className="h-6 w-6">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-          </svg>
-        </button>
-      </div>
-
-      <SummaryStats
-        gpa={gpa}
-        summary={summary}
-        categories={categories}
-      />
-
-      <div className="space-y-3 w-full semester-cards-container">
-        {semesters.map((sem) => (
-          <SemesterCard
-            key={sem}
-            semesterName={sem}
-            coursesForSemester={courses.filter(c => c.semester === sem)}
-            allCategories={categories}
-            addCourseToSemesterFn={addCourse}
-            confirmDeleteSemesterFn={confirmSemesterDelete}
-            updateCourseFn={updateCourse}
-            toggleCourseEditFn={toggleEdit}
-            removeCourseFn={removeCourse}
-            handleCourseDrop={handleDrop}
-            handleCourseDragStart={handleDragStart}
-          />
-        ))}
-
-        <AddSemesterForm
-          newSem={newSem}
-          setNewSem={setNewSem}
-          addSemester={addSemester}
-          SEMESTER_OPTIONS={SEMESTER_OPTIONS}
+    <TourGuide run={shouldRunTour} onComplete={handleTourCompletion}>
+      <div className="container mx-auto p-4 flex flex-col min-h-screen font-sans">
+        <SemesterConfirmationModal
+          semesterToDelete={semesterToDelete}
+          onConfirm={performSemesterDelete}
+          onCancel={handleSemesterCancelDelete}
         />
-      </div>
 
-      <Footer />
-    </div>
+        <RequirementsEditorModal
+          showReqEditor={showReqEditor}
+          onClose={() => { console.log("Closing Req Editor"); setShowReqEditor(false); }} // DEBUG
+          categories={categories}
+          requirements={requirements}
+          setRequirements={(newReqs) => {
+            // This should update the current profile's requirements in degreeProfiles state
+            setDegreeProfiles(prev => ({
+              ...prev,
+              [currentProfile]: newReqs
+            }));
+          }}
+          newCategoryName={newCategoryName}
+          setNewCategoryName={setNewCategoryName}
+          newCategoryValue={newCategoryValue}
+          setNewCategoryValue={setNewCategoryValue}
+          addCustomCategory={addCustomCategory}
+        />
+
+        <DegreeManagerModal
+          showModal={showDegreeManagerModal}
+          onClose={() => { console.log("Closing Degree Manager"); setShowDegreeManagerModal(false); }} // DEBUG
+          degreeProfiles={degreeProfiles}
+          addProfileFn={addDegreeProfile}
+          removeProfileFn={removeDegreeProfile}
+        />
+
+        <Header
+          currentProfile={currentProfile}
+          availableProfiles={availableProfiles}
+          changeProfile={changeProfile}
+          setShowReqEditor={() => { console.log("Setting showReqEditor=true"); setShowReqEditor(true); }} // DEBUG
+          setShowDegreeManagerModal={() => { console.log("Setting showDegreeManagerModal=true"); setShowDegreeManagerModal(true); }} // DEBUG
+          onStartTourRequest={handleStartTourRequest} // Already has log inside
+          isGuest={isGuest}
+          onLogout={handleHeaderLogout}
+        />
+
+        <div className="flex justify-center items-center my-6 pdf-upload-section">
+          <PdfUpload onPdfDataParsed={handlePdfDataParsed} />
+          <button
+            type="button"
+            className="ml-2 rtl:mr-2 rtl:ml-0 h-10 w-10 flex items-center justify-center rounded-md bg-teal-600 hover:bg-teal-700 text-white shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors duration-150"
+            onClick={() => alert("יש לצרף גליון ציונים של כלל התואר מאתר sap דרך בקשות")}
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-6 w-6">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+
+        <SummaryStats
+          gpa={gpa}
+          summary={progressSummary} // Pass the summary object from useProgress
+          categories={categories}
+        />
+
+        <div className="space-y-3 w-full semester-cards-container">
+          {semesters.map((sem) => (
+            <SemesterCard
+              key={sem}
+              semesterName={sem}
+              coursesForSemester={courses.filter(c => c.semester === sem)}
+              allCategories={categories}
+              addCourseToSemesterFn={addCourse}
+              confirmDeleteSemesterFn={confirmSemesterDelete}
+              updateCourseFn={updateCourse}
+              toggleCourseEditFn={toggleEdit}
+              removeCourseFn={removeCourse}
+              handleCourseDrop={handleDrop}
+              handleCourseDragStart={handleDragStart}
+            />
+          ))}
+
+          <AddSemesterForm
+            newSem={newSem}
+            setNewSem={setNewSem}
+            addSemester={addSemester}
+            SEMESTER_OPTIONS={SEMESTER_OPTIONS}
+          />
+        </div>
+
+        <Footer />
+      </div>
+    </TourGuide>
   );
 }
 

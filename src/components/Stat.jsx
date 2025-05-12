@@ -5,13 +5,14 @@ import { CATEGORY_COLORS } from "../constants"; // Assuming constants.js is one 
 export default function Stat({ label, value, required }) {
     // Calculate the remaining percentage (not completed)
     const percentComplete = required ? Math.min(100, Math.max(0, 100 * (1 - value / required))) : 0;
-    const colors = CATEGORY_COLORS[label] || { bg: "bg-gray-100", text: "text-gray-800", border: "border-gray-200", bar: "bg-orange-500" };
+    const defaultColors = CATEGORY_COLORS["default"] || { bg: "bg-gray-50", text: "text-gray-700", bar: "bg-gray-400" };
+    const colors = CATEGORY_COLORS[label] || defaultColors;
 
     // Extract the color code from the Tailwind class for the progress bar
     const barColorClass = colors.bar.replace('bg-', '');
 
     return (
-        <div className={`google-card p-3 ${colors.bg} border border-gray-100 rounded-md shadow-sm`}>
+        <div className={`google-card p-3 border border-gray-100 rounded-md shadow-sm ${colors.gradient}`}>
             <div className="flex justify-between items-center">
                 <span className={`text-sm font-medium ${colors.text}`}>{label}</span>
                 <span className={`text-sm font-bold ${colors.text}`}>{value.toFixed(1)}</span>

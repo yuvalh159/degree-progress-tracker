@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext'; // Adjust path as needed
-import logoSymbol from '../../assets/symbol.png'; // Import the logo
+import logoSymbol from '/symbol.png'; // Updated import path from ../../assets/symbol.png
 // TODO: Import routing mechanism (e.g., useNavigate from react-router-dom) if needed for redirect
 
 export default function Signup({ onSwitchToLogin }) {
@@ -44,10 +44,7 @@ export default function Signup({ onSwitchToLogin }) {
             <div className="max-w-md w-full space-y-8 p-10 bg-white shadow-xl rounded-xl border border-stone-200">
                 {/* Logo and Site Title */}
                 <div className="flex flex-col items-center mb-6">
-                    <img src={logoSymbol} alt="Site Logo" className="w-20 h-20 mb-4" />
-                    <h1 className="text-3xl font-semibold text-gray-800 text-center">
-                        נקודות אור - מעקב התקדמות אקדמית
-                    </h1>
+                    <img src={logoSymbol} alt="Site Logo" className="w-56 h-56 mb-4" />
                 </div>
 
                 <div>
